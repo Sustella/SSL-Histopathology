@@ -20,7 +20,7 @@ from timm.data.transforms import _pil_interp
 from .cached_image_folder import CachedImageFolder
 from .custom_image_folder import CustomImageFolder
 from .samplers import SubsetRandomSampler
-from histomicstk.preprocessing.augmentation.color_augmentation import rgb_perturb_stain_concentration
+#from histomicstk.preprocessing.augmentation.color_augmentation import rgb_perturb_stain_concentration
 
 
 def build_loader(config):
