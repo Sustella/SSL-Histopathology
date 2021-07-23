@@ -12,8 +12,8 @@
     - TCGA currently unavailable
     - Patch
         - BACH 400patch/30wsi (https://zenodo.org/record/3632035#.YPsFwVNKheg)
-        - BreaKHis needRequest (https://web.inf.ufpr.br/vri/databases/breast-cancer-histopathological-database-breakhis/)
-        - BreastPathQ MayNotAvailable? (https://breastpathq.grand-challenge.org/)
+        - ~~BreaKHis needRequest (https://web.inf.ufpr.br/vri/databases/breast-cancer-histopathological-database-breakhis/)~~
+        - ~~BreastPathQ MayNotAvailable? (https://breastpathq.grand-challenge.org/)~~
         - ICPR2014-Mitosis (https://mitos-atypia-14.grand-challenge.org/Donwload/)
         - NCT-CRC-HE-100k-NONNORM (https://zenodo.org/record/1214456#.YPsH8lNKheg)
     - WSI
