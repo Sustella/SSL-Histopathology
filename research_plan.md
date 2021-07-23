@@ -18,7 +18,8 @@
         - NCT-CRC-HE-100k-NONNORM (https://zenodo.org/record/1214456#.YPsH8lNKheg)
     - WSI
         - BACH (see above)
-        - CAMELYON16/17 (or PatchCamelyon?)
+        - CAMELYON16 (https://drive.google.com/drive/folders/0BzsdkU4jWx9Bb19WNndQTlUwb2M?resourcekey=0-FREBAxB4QK4bt9Zch_g5Mg)
+        - CAMELYON17 (https://drive.google.com/drive/folders/0BzsdkU4jWx9BaXVHSXRJTnpLZU0?resourcekey=0-tyfGzeoOMAWlP_ogPt_4pw)
         - TUPAC16 (https://tupac.grand-challenge.org/Dataset/)
         - CTPAC (https://wiki.cancerimagingarchive.net/x/mIREAQ)
         - TCIA_Others (https://www.cancerimagingarchive.net/histopathology-imaging-on-tcia/)
