@@ -1,7 +1,7 @@
 # Research Plan
 
 ## Purposes
-1. SSL with vs without STRAP
+1. SSL with vs without STRAP (https://github.com/rikiyay/style-transfer-for-digital-pathology)
 1. ViT vs ResNet(18 or 50)
     - for ViT, we may want to use MoBy SWIN, MoBy/DINO DeiT
 1. skip comparison for aggregation for now... (Attention-MIL, CLAM, Dual-Stream MIL, Transformer)
