@@ -14,7 +14,7 @@
         - BACH 400patch/30wsi (https://zenodo.org/record/3632035#.YPsFwVNKheg)
         - ~~BreaKHis needRequest (https://web.inf.ufpr.br/vri/databases/breast-cancer-histopathological-database-breakhis/)~~
         - ~~BreastPathQ MayNotAvailable? (https://breastpathq.grand-challenge.org/)~~
-        - ICPR2014-Mitosis (https://mitos-atypia-14.grand-challenge.org/Donwload/)
+        - ~~ICPR2014-Mitosis (https://mitos-atypia-14.grand-challenge.org/Donwload/)~~
         - NCT-CRC-HE-100k-NONNORM (https://zenodo.org/record/1214456#.YPsH8lNKheg)
     - WSI
         - BACH (see above)
@@ -24,7 +24,7 @@
         - CTPAC (https://wiki.cancerimagingarchive.net/x/mIREAQ)
         - TCIA_Others (https://www.cancerimagingarchive.net/histopathology-imaging-on-tcia/)
             - such as
-                - NLST (https://wiki.cancerimagingarchive.net/display/NLST/National+Lung+Screening+Trial)
+                - ~~NLST (https://wiki.cancerimagingarchive.net/display/NLST/National+Lung+Screening+Trial)~~
                 - SLN-Breast (https://wiki.cancerimagingarchive.net/display/Public/Breast+Metastases+to+Axillary+Lymph+Nodes)
 1. Downstream tasks (first tile-level -> next wsi-level)
     - tile-level classification
