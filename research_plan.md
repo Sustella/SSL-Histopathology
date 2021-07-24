@@ -21,18 +21,17 @@
         - CAMELYON16 (https://drive.google.com/drive/folders/0BzsdkU4jWx9Bb19WNndQTlUwb2M?resourcekey=0-FREBAxB4QK4bt9Zch_g5Mg)
         - CAMELYON17 (https://drive.google.com/drive/folders/0BzsdkU4jWx9BaXVHSXRJTnpLZU0?resourcekey=0-tyfGzeoOMAWlP_ogPt_4pw)
         - TUPAC16 (https://tupac.grand-challenge.org/Dataset/)
-        - CTPAC (https://wiki.cancerimagingarchive.net/x/mIREAQ)
-        - TCIA_Others (https://www.cancerimagingarchive.net/histopathology-imaging-on-tcia/)
-            - such as
-                - ~~NLST (https://wiki.cancerimagingarchive.net/display/NLST/National+Lung+Screening+Trial)~~
-                - SLN-Breast (https://wiki.cancerimagingarchive.net/display/Public/Breast+Metastases+to+Axillary+Lymph+Nodes)
+        - TCIA_Collections (https://www.cancerimagingarchive.net/histopathology-imaging-on-tcia/)
+            - CTPAC (https://www.cancerimagingarchive.net/collections/) -> filter with CTPAC
+            - ~~NLST (https://wiki.cancerimagingarchive.net/display/NLST/National+Lung+Screening+Trial)~~
+            - SLN-Breast (https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=52763339)
 1. Downstream tasks (first tile-level -> next wsi-level)
     - tile-level classification
-        - WILDS (> PatchCamelyon)
-        - NCT-CRC-HE-100K/CRC-VAL-HE-7K
+        - WILDS (https://worksheets.codalab.org/worksheets/0xb44731cc8e8a4265a20146c3887b6b90)
+        - NCT-CRC-HE-100K/CRC-VAL-HE-7K (see above)
     - wsi-level classification
-        - CAMELYON16/17
-        - PANDA
+        - CAMELYON16/17 (see above)
+        - PANDA (https://www.kaggle.com/c/prostate-cancer-grade-assessment)
 
 ## Implementation
 1. SSL
