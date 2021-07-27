@@ -38,7 +38,7 @@ def mask_percent(np_img):
 def tissue_percent(np_img):
     return 100 - mask_percent(np_img)
 
-def filter_green_channel(np_img, green_thresh=230, avoid_overmask=True, overmask_thresh=90, output_type="bool"):
+def filter_green_channel(np_img, green_thresh=200, avoid_overmask=True, overmask_thresh=90, output_type="bool"):
     g = np_img[:, :, 1]
     gr_ch_mask = (g < green_thresh) & (g > 0)
     mask_percentage = mask_percent(gr_ch_mask)
@@ -198,7 +198,7 @@ def mask_rgb(rgb, mask):
 def apply_image_filters(np_img):
     rgb = np_img
     mask_not_green = filter_green_channel(rgb)
-    # mask_not_gray = filter_grays(rgb)
+    mask_not_gray = filter_grays(rgb)
     mask_no_red_pen = filter_red_pen(rgb)
     mask_no_green_pen = filter_green_pen(rgb)
     rgb_no_green_pen = mask_rgb(rgb, mask_no_green_pen)
