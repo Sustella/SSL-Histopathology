@@ -53,7 +53,7 @@
     - TUPAC16: 821 svs, 40x (some are 20x)
     - total number of WSI: 20310
 
-    - NCT-CRC-HE-100k-NONNORM: 100k tiles, 20x, 224x224
+    - NCT-CRC-HE-100k-NONNORM: 100k tiles, 20x, 224x224 (excluded BACK tiles)
 
 1. Downstream tasks (first tile-level -> next wsi-level)
     - tile-level classification
