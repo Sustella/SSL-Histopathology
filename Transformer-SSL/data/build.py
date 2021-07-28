@@ -20,8 +20,7 @@ from timm.data.transforms import _pil_interp
 from .cached_image_folder import CachedImageFolder
 from .custom_image_folder import CustomImageFolder
 from .samplers import SubsetRandomSampler
-#from histomicstk.preprocessing.augmentation.color_augmentation import rgb_perturb_stain_concentration
-
+from style_transfer import stylize
 
 def build_loader(config):
     config.defrost()
@@ -101,36 +100,72 @@ def build_dataset(is_train, config):
 def build_transform(is_train, config):
     if config.AUG.SSL_AUG:
         if config.AUG.SSL_AUG_TYPE == 'byol':
-            normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-            
-            transform_1 = transforms.Compose([
-               # stain_augment(),
-               # transforms.ToPILImage(),
-                transforms.RandomResizedCrop(config.DATA.IMG_SIZE, scale=(config.AUG.SSL_AUG_CROP, 1.)),
-               # stain_augment(),
-               # transforms.ToPILImage(),
-                transforms.RandomHorizontalFlip(),
-                transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.2, 0.1)], p=0.8),
-                transforms.RandomGrayscale(p=0.2),
-                transforms.RandomApply([GaussianBlur()], p=1.0),
-                transforms.ToTensor(),
-                normalize,
-            ])
-            transform_2 = transforms.Compose([
-              #  stain_augment(),
-              #  transforms.ToPILImage(),
-                transforms.RandomResizedCrop(config.DATA.IMG_SIZE, scale=(config.AUG.SSL_AUG_CROP, 1.)),
-              #  stain_augment(),
-              #  transforms.ToPILImage(),
-                transforms.RandomHorizontalFlip(),
-                transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.2, 0.1)], p=0.8),
-                transforms.RandomGrayscale(p=0.2),
-                transforms.RandomApply([GaussianBlur()], p=0.1),
-                transforms.RandomApply([ImageOps.solarize], p=0.2),
-                transforms.ToTensor(),
-                normalize,
-            ])
-            
+            if config.AUG.TRANSFORMATION == 'strap':
+                #print("Transformation STRAP")
+                normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+                stylize_run = stylize.StyleTransfer(style_dir=config.AUG.STRAP_STYLE_DIR, content_size=config.DATA.IMG_SIZE)
+                transform_1 = transforms.Compose([
+                   # stain_augment(),
+                    stylize_run,
+                    transforms.ToPILImage(),
+                    transforms.RandomResizedCrop(config.DATA.IMG_SIZE, scale=(config.AUG.SSL_AUG_CROP, 1.)),
+                   # stylize_run,
+                   # stain_augment(),
+                   # transforms.ToPILImage(),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.2, 0.1)], p=0.8),
+                    transforms.RandomGrayscale(p=0.2),
+                    transforms.RandomApply([GaussianBlur()], p=1.0),
+                    transforms.ToTensor(),
+                    normalize,
+                ])
+                transform_2 = transforms.Compose([
+                  #  stain_augment(),
+                    stylize_run,
+                    transforms.ToPILImage(),
+                    transforms.RandomResizedCrop(config.DATA.IMG_SIZE, scale=(config.AUG.SSL_AUG_CROP, 1.)),
+                  #  stylize_run,
+                  #  stain_augment(),
+                  #  transforms.ToPILImage(),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.2, 0.1)], p=0.8),
+                    transforms.RandomGrayscale(p=0.2),
+                    transforms.RandomApply([GaussianBlur()], p=0.1),
+                    transforms.RandomApply([ImageOps.solarize], p=0.2),
+                    transforms.ToTensor(),
+                    normalize,
+                ])
+            else:
+                normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+                transform_1 = transforms.Compose([
+                   # stain_augment(),
+                   # transforms.ToPILImage(),
+                    transforms.RandomResizedCrop(config.DATA.IMG_SIZE, scale=(config.AUG.SSL_AUG_CROP, 1.)),
+                   # stain_augment(),
+                   # transforms.ToPILImage(),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.2, 0.1)], p=0.8),
+                    transforms.RandomGrayscale(p=0.2),
+                    transforms.RandomApply([GaussianBlur()], p=1.0),
+                    transforms.ToTensor(),
+                    normalize,
+                ])
+                transform_2 = transforms.Compose([
+                  #  stain_augment(),
+                  #  transforms.ToPILImage(),
+                    transforms.RandomResizedCrop(config.DATA.IMG_SIZE, scale=(config.AUG.SSL_AUG_CROP, 1.)),
+                  #  stain_augment(),
+                  #  transforms.ToPILImage(),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.2, 0.1)], p=0.8),
+                    transforms.RandomGrayscale(p=0.2),
+                    transforms.RandomApply([GaussianBlur()], p=0.1),
+                    transforms.RandomApply([ImageOps.solarize], p=0.2),
+                    transforms.ToTensor(),
+                    normalize,
+                ])
+
+             
             transform = (transform_1, transform_2)
             return transform
         else:
@@ -162,7 +197,7 @@ def build_transform(is_train, config):
                 normalize,
             ])
         return transform
-    
+
     resize_im = config.DATA.IMG_SIZE > 32
     if is_train:
         # this should always dispatch to transforms_imagenet_train
@@ -201,12 +236,6 @@ def build_transform(is_train, config):
     t.append(transforms.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD))
     return transforms.Compose(t)
 
-class stain_augment(object):
-    def __call__(self, sample):
-        sample = np.array(sample)
-        rgbaug = rgb_perturb_stain_concentration(sample, sigma1=1., sigma2=1.)
-        return rgbaug
-
 class GaussianBlur(object):
     """Gaussian Blur version 2"""
 
@@ -214,3 +243,4 @@ class GaussianBlur(object):
         sigma = np.random.uniform(0.1, 2.0)
         x = x.filter(ImageFilter.GaussianBlur(radius=sigma))
         return x
+
