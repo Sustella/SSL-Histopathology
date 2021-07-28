@@ -31,7 +31,6 @@ try:
 except ImportError:
     amp = None
 
-
 def parse_option():
     parser = argparse.ArgumentParser('MoBY training and evaluation script', add_help=False)
     parser.add_argument('--cfg', type=str, required=True, metavar="FILE", help='path to config file', )
@@ -45,6 +44,7 @@ def parse_option():
     # easy config modification
     parser.add_argument('--batch-size', type=int, help="batch size for single GPU")
     parser.add_argument('--data-path', type=str, help='path to dataset')
+    parser.add_argument('--strap-aug-style-path', type=str, help='path to STRAP style images')
     parser.add_argument('--zip', action='store_true', help='use zipped dataset instead of folder dataset')
     parser.add_argument('--cache-mode', type=str, default='part', choices=['no', 'full', 'part'],
                         help='no: no cache, '

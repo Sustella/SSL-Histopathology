@@ -157,6 +157,10 @@ _C.AUG.MIXUP_PROB = 1.0
 _C.AUG.MIXUP_SWITCH_PROB = 0.5
 # How to apply mixup/cutmix params. Per "batch", "pair", or "elem"
 _C.AUG.MIXUP_MODE = 'batch'
+#Transformation type: None, 'strap', 'stain_aug', 'stain_norm' 
+_C.AUG.TRANSFORMATION = None 
+#STRAP style directory
+_C.AUG.STRAP_STYLE_DIR = ''
 # Self-Supervised Learning Augmentation
 _C.AUG.SSL_AUG = False
 # SSL-Aug type
@@ -224,6 +228,8 @@ def update_config(config, args):
         config.DATA.BATCH_SIZE = args.batch_size
     if args.data_path:
         config.DATA.DATA_PATH = args.data_path
+    if args.strap_aug_style_path:
+        config.AUG.STRAP_STYLE_DIR = args.strap_aug_style_path
     if args.zip:
         config.DATA.ZIP_MODE = True
     if args.cache_mode:
