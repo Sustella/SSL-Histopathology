@@ -25,13 +25,43 @@
             - CTPAC (https://www.cancerimagingarchive.net/collections/) -> filter with CTPAC
             - ~~NLST (https://wiki.cancerimagingarchive.net/display/NLST/National+Lung+Screening+Trial)~~
             - SLN-Breast (https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=52763339)
+        - PANDA  (https://www.kaggle.com/c/prostate-cancer-grade-assessment)
+
+    - only using WSI datasets? or using both Patch and WSI datasets? -> WSI datasets + Kather
+    - tile on 20x fixed? Or mixture of 20x and 40x (i.e., max magnif. level)? -> latter
+    - randomly sample 100 tiles/WSI for the WSI datasets except for PANDA, 10 tiles/WSI for PANDA (100 x 9000 + 10 x 11000 = 900,000 + 110,000 = 1,010,000)
+    - tile_size: 224
+
+1. Metadata for datasets
+    - CTPAC/CCRCC: 782 svs, 20x
+    - CTPAC/GBM: 510 svs, 20x
+    - CTPAC/COAD: 372 svs, 40x
+    - CTPAC/LSCC: 1081 svs, 20x
+    - CTPAC/BRCA: 653 svs, 20x and 40x
+    - CTPAC/OV: 221 svs, 40x
+    - CTPAC/SAR: 307 svs, 20x (some are about 30x)
+    - CTPAC/CM: 411 svs, 20x (some are about 30x)
+    - CTPAC/LUAD: 1137 svs, 20x (some are 40x and about 30x)
+    - CTPAC/PDA: 557 svs, 20x
+    - CTPAC/UCEC: 883 svs, 20x (some are 40x and about 30x)
+    - CTPAC/HNSCC: 390 svs, 20x
+    - CAMELYON16: 159+111+129 tif, 40x
+    - CAMELYON17: 1000 tif, 40x
+    - SLN-Breast: 130 svs, 20x
+    - PANDA: 10616 tiff, 20x (biopsy)
+    - BACH: 40 svs, 20x
+    - TUPAC16: 821 svs, 40x (some are 20x)
+    - total number of WSI: 20310
+
+    - NCT-CRC-HE-100k-NONNORM: 100k tiles, 20x, 224x224
+
 1. Downstream tasks (first tile-level -> next wsi-level)
     - tile-level classification
         - WILDS (https://worksheets.codalab.org/worksheets/0xb44731cc8e8a4265a20146c3887b6b90)
         - NCT-CRC-HE-100K/CRC-VAL-HE-7K (see above)
     - wsi-level classification
         - CAMELYON16/17 (see above)
-        - PANDA (https://www.kaggle.com/c/prostate-cancer-grade-assessment)
+        - PANDA (see above)
 
 ## Implementation
 1. SSL
