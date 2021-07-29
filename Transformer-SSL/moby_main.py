@@ -73,8 +73,10 @@ def parse_option():
 
 
 def main(config):
-    dataset_train, _, data_loader_train, _, _ = build_loader(config)
-    
+    if config.AUG.SSL_LINEAR_AUG:
+        dataset_train, _, data_loader_train, _, _ = build_loader(config)
+    else:
+        dataset_train, data_loader_train, _ = build_loader(config)
     config.defrost()
     config.DATA.TRAINING_IMAGES = len(dataset_train)
     config.freeze()

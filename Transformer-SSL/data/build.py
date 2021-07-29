@@ -9,7 +9,7 @@
 import os
 import torch
 import numpy as np
-from PIL import ImageFilter, ImageOps
+from PIL import Image, ImageFilter, ImageOps
 import torch.distributed as dist
 from torchvision import datasets, transforms
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
@@ -21,14 +21,17 @@ from .cached_image_folder import CachedImageFolder
 from .custom_image_folder import CustomImageFolder
 from .samplers import SubsetRandomSampler
 from style_transfer import stylize
+from histomicstk.preprocessing.augmentation.color_augmentation import rgb_perturb_stain_concentration
+import staintools
 
 def build_loader(config):
     config.defrost()
     dataset_train, config.MODEL.NUM_CLASSES = build_dataset(is_train=True, config=config)
     config.freeze()
     print(f"local rank {config.LOCAL_RANK} / global rank {dist.get_rank()} successfully build train dataset")
-    dataset_val, _ = build_dataset(is_train=False, config=config)
-    print(f"local rank {config.LOCAL_RANK} / global rank {dist.get_rank()} successfully build val dataset")
+    if config.AUG.SSL_LINEAR_AUG:
+        dataset_val, _ = build_dataset(is_train=False, config=config)
+        print(f"local rank {config.LOCAL_RANK} / global rank {dist.get_rank()} successfully build val dataset")
 
     num_tasks = dist.get_world_size()
     global_rank = dist.get_rank()
@@ -39,9 +42,9 @@ def build_loader(config):
         sampler_train = torch.utils.data.DistributedSampler(
             dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True
         )
-
-    indices = np.arange(dist.get_rank(), len(dataset_val), dist.get_world_size())
-    sampler_val = SubsetRandomSampler(indices)
+    if config.AUG.SSL_LINEAR_AUG:
+        indices = np.arange(dist.get_rank(), len(dataset_val), dist.get_world_size())
+        sampler_val = SubsetRandomSampler(indices)
 
     data_loader_train = torch.utils.data.DataLoader(
         dataset_train, sampler=sampler_train,
@@ -51,14 +54,15 @@ def build_loader(config):
         drop_last=True,
     )
 
-    data_loader_val = torch.utils.data.DataLoader(
-        dataset_val, sampler=sampler_val,
-        batch_size=config.DATA.BATCH_SIZE,
-        shuffle=False,
-        num_workers=config.DATA.NUM_WORKERS,
-        pin_memory=config.DATA.PIN_MEMORY,
-        drop_last=False
-    )
+    if config.AUG.SSL_LINEAR_AUG:
+        data_loader_val = torch.utils.data.DataLoader(
+            dataset_val, sampler=sampler_val,
+            batch_size=config.DATA.BATCH_SIZE,
+            shuffle=False,
+            num_workers=config.DATA.NUM_WORKERS,
+            pin_memory=config.DATA.PIN_MEMORY,
+            drop_last=False
+        )
 
     # setup mixup / cutmix
     mixup_fn = None
@@ -68,8 +72,9 @@ def build_loader(config):
             mixup_alpha=config.AUG.MIXUP, cutmix_alpha=config.AUG.CUTMIX, cutmix_minmax=config.AUG.CUTMIX_MINMAX,
             prob=config.AUG.MIXUP_PROB, switch_prob=config.AUG.MIXUP_SWITCH_PROB, mode=config.AUG.MIXUP_MODE,
             label_smoothing=config.MODEL.LABEL_SMOOTHING, num_classes=config.MODEL.NUM_CLASSES)
-
-    return dataset_train, dataset_val, data_loader_train, data_loader_val, mixup_fn
+    if config.AUG.SSL_LINEAR_AUG:
+        return dataset_train, dataset_val, data_loader_train, data_loader_val, mixup_fn
+    return dataset_train, data_loader_train, mixup_fn
 
 
 def build_dataset(is_train, config):
@@ -95,23 +100,24 @@ def build_dataset(is_train, config):
         raise NotImplementedError("We only support ImageNet Now.")
 
     return dataset, nb_classes
-
-
+    
 def build_transform(is_train, config):
     if config.AUG.SSL_AUG:
         if config.AUG.SSL_AUG_TYPE == 'byol':
+            normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             if config.AUG.TRANSFORMATION == 'strap':
                 #print("Transformation STRAP")
-                normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-                stylize_run = stylize.StyleTransfer(style_dir=config.AUG.STRAP_STYLE_DIR, content_size=config.DATA.IMG_SIZE)
+                T = stylize.StyleTransfer(style_dir=config.AUG.STRAP_STYLE_DIR, content_size=config.DATA.IMG_SIZE)
+            elif config.AUG.TRANSFORMATION == 'stain_aug':
+                T = stain_augment()
+            elif config.AUG.TRANSFORMATION == 'stain_norm':
+                T = stain_norm()
+
+            if config.AUG.TRANSFORMATION is not None: 
                 transform_1 = transforms.Compose([
-                   # stain_augment(),
-                    stylize_run,
+                    T,
                     transforms.ToPILImage(),
                     transforms.RandomResizedCrop(config.DATA.IMG_SIZE, scale=(config.AUG.SSL_AUG_CROP, 1.)),
-                   # stylize_run,
-                   # stain_augment(),
-                   # transforms.ToPILImage(),
                     transforms.RandomHorizontalFlip(),
                     transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.2, 0.1)], p=0.8),
                     transforms.RandomGrayscale(p=0.2),
@@ -120,13 +126,9 @@ def build_transform(is_train, config):
                     normalize,
                 ])
                 transform_2 = transforms.Compose([
-                  #  stain_augment(),
-                    stylize_run,
-                    transforms.ToPILImage(),
+                    T,
+	            transforms.ToPILImage(),
                     transforms.RandomResizedCrop(config.DATA.IMG_SIZE, scale=(config.AUG.SSL_AUG_CROP, 1.)),
-                  #  stylize_run,
-                  #  stain_augment(),
-                  #  transforms.ToPILImage(),
                     transforms.RandomHorizontalFlip(),
                     transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.2, 0.1)], p=0.8),
                     transforms.RandomGrayscale(p=0.2),
@@ -136,13 +138,8 @@ def build_transform(is_train, config):
                     normalize,
                 ])
             else:
-                normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
                 transform_1 = transforms.Compose([
-                   # stain_augment(),
-                   # transforms.ToPILImage(),
                     transforms.RandomResizedCrop(config.DATA.IMG_SIZE, scale=(config.AUG.SSL_AUG_CROP, 1.)),
-                   # stain_augment(),
-                   # transforms.ToPILImage(),
                     transforms.RandomHorizontalFlip(),
                     transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.2, 0.1)], p=0.8),
                     transforms.RandomGrayscale(p=0.2),
@@ -151,11 +148,7 @@ def build_transform(is_train, config):
                     normalize,
                 ])
                 transform_2 = transforms.Compose([
-                  #  stain_augment(),
-                  #  transforms.ToPILImage(),
                     transforms.RandomResizedCrop(config.DATA.IMG_SIZE, scale=(config.AUG.SSL_AUG_CROP, 1.)),
-                  #  stain_augment(),
-                  #  transforms.ToPILImage(),
                     transforms.RandomHorizontalFlip(),
                     transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.2, 0.1)], p=0.8),
                     transforms.RandomGrayscale(p=0.2),
@@ -176,22 +169,14 @@ def build_transform(is_train, config):
         
         if is_train:
             transform = transforms.Compose([
-               # stain_augment(),
-               # transforms.ToPILImage(),
                 transforms.RandomResizedCrop(config.DATA.IMG_SIZE),
-               # stain_augment(),
-               # transforms.ToPILImage(),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 normalize,
             ])
         else:
             transform = transforms.Compose([
-               # stain_augment(),
-               # transforms.ToPILImage(),
                 transforms.Resize(config.DATA.IMG_SIZE + 32),
-               # stain_augment(),
-               # transforms.ToPILImage(),
                 transforms.CenterCrop(config.DATA.IMG_SIZE),
                 transforms.ToTensor(),
                 normalize,
@@ -244,3 +229,31 @@ class GaussianBlur(object):
         x = x.filter(ImageFilter.GaussianBlur(radius=sigma))
         return x
 
+class stain_augment(object):
+    def __call__(self, sample):
+        sample = np.array(sample)
+        rgbaug = rgb_perturb_stain_concentration(sample, sigma1=1., sigma2=1.)
+        return rgbaug
+    
+class stain_norm(object):
+    def get_stain_normalizer(self, path='/home/users/stellasu/Transformer-SSL/stain_norm_ref.png', method='macenko'):
+        target = staintools.read_image(path)
+        target = staintools.LuminosityStandardizer.standardize(target)
+        normalizer = staintools.StainNormalizer(method=method)
+        normalizer.fit(target)
+        return normalizer
+
+    def apply_stain_norm(self, tile, normalizer):
+        to_transform = np.array(tile).astype('uint8')
+        to_transform = staintools.LuminosityStandardizer.standardize(to_transform)
+        try:
+            transformed = normalizer.transform(to_transform)
+        except Exception:  # TissueMaskException
+            return tile
+        return transformed
+
+    def __call__(self, sample):
+        sample = np.array(sample)
+        normalizer = self.get_stain_normalizer()
+        rgb_normalized = self.apply_stain_norm(sample, normalizer)
+        return rgb_normalized
