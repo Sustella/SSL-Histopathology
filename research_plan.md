@@ -20,16 +20,16 @@
         - BACH (see above)
         - CAMELYON16 (https://drive.google.com/drive/folders/0BzsdkU4jWx9Bb19WNndQTlUwb2M?resourcekey=0-FREBAxB4QK4bt9Zch_g5Mg)
         - CAMELYON17 (https://drive.google.com/drive/folders/0BzsdkU4jWx9BaXVHSXRJTnpLZU0?resourcekey=0-tyfGzeoOMAWlP_ogPt_4pw)
-        - TUPAC16 (https://tupac.grand-challenge.org/Dataset/)
+        - TUPAC16 (https://tupac.grand-challenge.org/Dataset/) # originate from TCGA
         - TCIA_Collections (https://www.cancerimagingarchive.net/histopathology-imaging-on-tcia/)
             - CTPAC (https://www.cancerimagingarchive.net/collections/) -> filter with CTPAC
             - ~~NLST (https://wiki.cancerimagingarchive.net/display/NLST/National+Lung+Screening+Trial)~~
             - SLN-Breast (https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=52763339)
         - PANDA  (https://www.kaggle.com/c/prostate-cancer-grade-assessment)
 
-    - only using WSI datasets? or using both Patch and WSI datasets? -> WSI datasets + Kather
-    - tile on 20x fixed? Or mixture of 20x and 40x (i.e., max magnif. level)? -> latter
-    - randomly sample 100 tiles/WSI for the WSI datasets except for PANDA, 10 tiles/WSI for PANDA (100 x 9000 + 10 x 11000 = 900,000 + 110,000 = 1,010,000)
+    - only using WSI datasets? or using both Patch and WSI datasets? -> WSI datasets (20,310 slides) + Kather (100K - BACK (10,566 tiles))
+    - tile on 20x fixed? Or mixture of 20x and 40x (i.e., max magnif. level)? -> we pick the latter to increase diversity in the dataset (refer to the above paper)
+    - randomly sample 100 tiles/WSI for the WSI datasets except for PANDA, 10 tiles/WSI for PANDA (100 x 9000 + 10 x 11000 = 900,000 + 110,000 = 1,010,000) -> total number of tiles = 1,112,722
     - tile_size: 224
 
 1. Metadata for datasets
@@ -53,7 +53,7 @@
     - TUPAC16: 821 svs, 40x (some are 20x)
     - total number of WSI: 20310
 
-    - NCT-CRC-HE-100k-NONNORM: 100k tiles, 20x, 224x224 (excluded BACK tiles)
+    - NCT-CRC-HE-100k-NONNORM: 100k tiles, 20x, 224x224 (excluded BACK tiles (n = 10,566))
 
 1. Downstream tasks (first tile-level -> next wsi-level)
     - tile-level classification
