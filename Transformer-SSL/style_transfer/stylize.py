@@ -12,7 +12,7 @@ import torchvision.transforms
 from torchvision.utils import save_image
 
 class StyleTransfer(object):
-    def __init__(self, style_dir, alpha=1., content_size=512, style_size=256):
+    def __init__(self, style_dir, alpha=1., content_size=1024, style_size=256):
         self.alpha = alpha
         # collect style files
         style_dir = Path(style_dir)

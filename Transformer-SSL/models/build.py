@@ -7,27 +7,25 @@
 # --------------------------------------------------------
 
 from functools import partial
-#from timm.models import vit_small_patch16_224
+from timm.models import deit_small_patch16_224
 from timm.models import vision_transformer
-from timm.models import resnet50
-from timm.models import resnet18
-#import torch
-from torch import nn
+from timm.models import resnet18, resnet50
+
 from .swin_transformer import SwinTransformer
-from .vision_transformer import VisionTransformer
 from .moby import MoBY
 
-#from .resnet_custom import resnet50_baseline
+from torch import nn
+from .vision_transformer import VisionTransformer
 
-#vit_models = dict(
-#    deit_small=vit_small_patch16_224,
-#)
+
+vit_models = dict(
+   deit_small=vit_small_patch16_224,
+)
 
 cnn_models = dict(
     resnet50 = resnet50,
-    resnet18 = resnet18,
+    # resnet18 = resnet18,
 )
-
 
 def build_model(config):
     model_type = config.MODEL.TYPE
@@ -52,15 +50,19 @@ def build_model(config):
             use_checkpoint=config.TRAIN.USE_CHECKPOINT,
             norm_befor_mlp=config.MODEL.SWIN.NORM_BEFORE_MLP,
         )
-#    elif encoder_type.startswith('vit') or encoder_type.startswith('deit'):
-#        enc = vit_models[encoder_type]
+    
+    elif encoder_type.startswith('deit'):
+       enc = vit_models[encoder_type]
+    
     elif encoder_type.startswith('vit'):
          enc = partial(
             VisionTransformer,
             img_size=[config.DATA.IMG_SIZE], patch_size=16, embed_dim=192, depth=12, num_heads=3, mlp_ratio=4, qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6),
         )
+
     elif encoder_type.startswith('resnet'):
         enc = cnn_models[encoder_type]
+
     else:
         raise NotImplementedError(f'--> Unknown encoder_type: {encoder_type}')
 

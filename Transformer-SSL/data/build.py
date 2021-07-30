@@ -74,11 +74,13 @@ def build_loader(config):
             label_smoothing=config.MODEL.LABEL_SMOOTHING, num_classes=config.MODEL.NUM_CLASSES)
     if config.AUG.SSL_LINEAR_AUG:
         return dataset_train, dataset_val, data_loader_train, data_loader_val, mixup_fn
-    return dataset_train, data_loader_train, mixup_fn
+    else:
+        return dataset_train, data_loader_train, mixup_fn
 
 
 def build_dataset(is_train, config):
     transform = build_transform(is_train, config)
+
     if config.DATA.DATASET == 'imagenet':
         prefix = 'train' if is_train else 'val'
         if config.DATA.ZIP_MODE:
@@ -91,13 +93,15 @@ def build_dataset(is_train, config):
             root = os.path.join(config.DATA.DATA_PATH, prefix)
             dataset = CustomImageFolder(root, transform=transform)
         nb_classes = 1000
+
     elif config.DATA.DATASET == 'wsi':
         prefix = 'train' if is_train else 'val'
         root = os.path.join(config.DATA.DATA_PATH, prefix)
         dataset = CustomImageFolder(root, transform=transform)
         nb_classes = 1
+
     else:
-        raise NotImplementedError("We only support ImageNet Now.")
+        raise NotImplementedError("We only support ImageNet or WSI Now.")
 
     return dataset, nb_classes
     
@@ -107,7 +111,7 @@ def build_transform(is_train, config):
             normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             if config.AUG.TRANSFORMATION == 'strap':
                 #print("Transformation STRAP")
-                T = stylize.StyleTransfer(style_dir=config.AUG.STRAP_STYLE_DIR, content_size=config.DATA.IMG_SIZE)
+                T = stylize.StyleTransfer(style_dir=config.AUG.STRAP_STYLE_DIR)
             elif config.AUG.TRANSFORMATION == 'stain_aug':
                 T = stain_augment()
             elif config.AUG.TRANSFORMATION == 'stain_norm':
@@ -127,7 +131,7 @@ def build_transform(is_train, config):
                 ])
                 transform_2 = transforms.Compose([
                     T,
-	            transforms.ToPILImage(),
+	                transforms.ToPILImage(),
                     transforms.RandomResizedCrop(config.DATA.IMG_SIZE, scale=(config.AUG.SSL_AUG_CROP, 1.)),
                     transforms.RandomHorizontalFlip(),
                     transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.2, 0.1)], p=0.8),
