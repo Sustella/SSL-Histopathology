@@ -14,8 +14,12 @@
 #
 # ------------------------------------------------------------------------
 
+# copy&pasted from https://github.com/CODAIT/deep-histopath/blob/master/deephistopath/wsi/filter.py, then modified (all but isWhitePatch and isBlackPatch)
+# copy and pasted from https://github.com/mahmoodlab/CLAM/blob/master/wsi_core/wsi_utils.py (isWhitePatch and isBlackPatch)
+
 import math
 import numpy as np
+import cv2
 from PIL import Image
 import skimage.morphology as sk_morphology
 
@@ -208,3 +212,10 @@ def apply_image_filters(np_img):
     rgb_remove_small = mask_rgb(rgb, mask_remove_small)
     img = rgb_remove_small
     return img
+    
+def isWhitePatch(patch, satThresh=15):
+    patch_hsv = cv2.cvtColor(patch, cv2.COLOR_RGB2HSV)
+    return True if np.mean(patch_hsv[:,:,1]) < satThresh else False
+
+def isBlackPatch(patch, rgbThresh=50):
+    return True if np.all(np.mean(patch, axis = (0,1)) < rgbThresh) else False
