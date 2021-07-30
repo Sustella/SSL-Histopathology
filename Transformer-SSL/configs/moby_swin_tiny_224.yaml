@@ -5,6 +5,8 @@ TRAIN:
   WEIGHT_DECAY: 0.05
 AUG:
   SSL_AUG: True
+DATA:
+  IMG_SIZE: 224
 MODEL:
   TYPE: moby
   NAME: moby__swin_tiny__patch4_window7_224__odpr02_tdpr0_cm099_ct02_queue4096_proj2_pred2

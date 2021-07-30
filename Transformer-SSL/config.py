@@ -161,6 +161,12 @@ _C.AUG.MIXUP_MODE = 'batch'
 _C.AUG.TRANSFORMATION = None 
 #STRAP style directory
 _C.AUG.STRAP_STYLE_DIR = ''
+#STRAP decoder path
+_C.AUG.STRAP_DECODER_PTH = ''
+#STRAP vgg path
+_C.AUG.STRAP_VGG_PTH = ''
+#Stain Normalization Reference Path
+_C.AUG.STAIN_NORM_PTH = ''
 # Self-Supervised Learning Augmentation
 _C.AUG.SSL_AUG = False
 # SSL-Aug type
@@ -222,6 +228,12 @@ def update_config(config, args):
     config.defrost()
     if args.opts:
         config.merge_from_list(args.opts)
+    #print('args.data_path {}'.format(args.data_path))
+    #print('args.strap_aug_style_path {}'.format(args.strap_aug_style_path))
+    #print('args.strap_aug_decoder_path {}'.format(args.strap_aug_decoder_path))
+    #print('args.strap-aug-decoder-path {}'.format(args.strap-aug-decoder-path))
+    #print('config.AUG.STRAP_DECODER_PTH')
+    #print(config.AUG.STRAP_DECODER_PTH)
 
     # merge from specific arguments
     if args.batch_size:
@@ -230,6 +242,12 @@ def update_config(config, args):
         config.DATA.DATA_PATH = args.data_path
     if args.strap_aug_style_path:
         config.AUG.STRAP_STYLE_DIR = args.strap_aug_style_path
+    if args.strap_aug_decoder_path:
+        config.AUG.STRAP_DECODER_PTH = args.strap_aug_decoder_path
+    if args.strap_aug_vgg_path:
+        config.AUG.STRAP_VGG_PTH = args.strap_aug_vgg_path
+    if args.stain_norm_path:
+        config.AUG.STAIN_NORM_PTH = args.stain_norm_path
     if args.zip:
         config.DATA.ZIP_MODE = True
     if args.cache_mode:

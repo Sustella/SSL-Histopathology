@@ -12,7 +12,7 @@ import torchvision.transforms
 from torchvision.utils import save_image
 
 class StyleTransfer(object):
-    def __init__(self, style_dir, alpha=1., content_size=512, style_size=256):
+    def __init__(self, style_dir, decoder_pth = '', vgg_pth = '', alpha=1., content_size=512, style_size=256):
         self.alpha = alpha
         # collect style files
         style_dir = Path(style_dir)
@@ -31,8 +31,8 @@ class StyleTransfer(object):
         decoder.eval()
         vgg.eval()
 
-        decoder.load_state_dict(torch.load('/home/users/stellasu/Transformer-SSL/style_transfer/models/decoder.pth'))
-        vgg.load_state_dict(torch.load('/home/users/stellasu/Transformer-SSL/style_transfer/models/vgg_normalised.pth'))
+        decoder.load_state_dict(torch.load(decoder_pth))
+        vgg.load_state_dict(torch.load(vgg_pth))
         self.vgg = nn.Sequential(*list(vgg.children())[:31])
         self.decoder = decoder
 

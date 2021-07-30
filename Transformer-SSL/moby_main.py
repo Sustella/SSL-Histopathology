@@ -45,6 +45,9 @@ def parse_option():
     parser.add_argument('--batch-size', type=int, help="batch size for single GPU")
     parser.add_argument('--data-path', type=str, help='path to dataset')
     parser.add_argument('--strap-aug-style-path', type=str, help='path to STRAP style images')
+    parser.add_argument('--strap-aug-decoder-path', type=str, help='path to STRAP style decoder')
+    parser.add_argument('--strap-aug-vgg-path', type=str, help='path to STRAP style vgg')
+    parser.add_argument('--stain-norm-path', type=str, help='path to stain normalization reference image')
     parser.add_argument('--zip', action='store_true', help='use zipped dataset instead of folder dataset')
     parser.add_argument('--cache-mode', type=str, default='part', choices=['no', 'full', 'part'],
                         help='no: no cache, '
@@ -66,7 +69,9 @@ def parse_option():
     parser.add_argument("--local_rank", type=int, required=True, help='local rank for DistributedDataParallel')
 
     args, unparsed = parser.parse_known_args()
-
+    
+    #print('args.strap_aug_style_path {}'.format(args.strap_aug_style_path))
+    #print('args.data_path {}'.format(args.data_path))
     config = get_config(args)
 
     return args, config

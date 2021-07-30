@@ -105,13 +105,13 @@ def build_transform(is_train, config):
     if config.AUG.SSL_AUG:
         if config.AUG.SSL_AUG_TYPE == 'byol':
             normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+
             if config.AUG.TRANSFORMATION == 'strap':
-                #print("Transformation STRAP")
-                T = stylize.StyleTransfer(style_dir=config.AUG.STRAP_STYLE_DIR, content_size=config.DATA.IMG_SIZE)
+                T = stylize.StyleTransfer(style_dir=config.AUG.STRAP_STYLE_DIR, decoder_pth=config.AUG.STRAP_DECODER_PTH, vgg_pth=config.AUG.STRAP_VGG_PTH, content_size=config.DATA.IMG_SIZE)
             elif config.AUG.TRANSFORMATION == 'stain_aug':
                 T = stain_augment()
             elif config.AUG.TRANSFORMATION == 'stain_norm':
-                T = stain_norm()
+                T = stain_norm(config.AUG.STAIN_NORM_PTH)
 
             if config.AUG.TRANSFORMATION is not None: 
                 transform_1 = transforms.Compose([
@@ -236,7 +236,10 @@ class stain_augment(object):
         return rgbaug
     
 class stain_norm(object):
-    def get_stain_normalizer(self, path='/home/users/stellasu/Transformer-SSL/stain_norm_ref.png', method='macenko'):
+    def __init__(self, norm_path):
+        self.norm_path = norm_path
+    def get_stain_normalizer(self, method='macenko'):
+        path = self.norm_path
         target = staintools.read_image(path)
         target = staintools.LuminosityStandardizer.standardize(target)
         normalizer = staintools.StainNormalizer(method=method)
