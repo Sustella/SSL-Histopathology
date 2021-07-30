@@ -33,8 +33,8 @@ class StyleTransfer(object):
         vgg = net.vgg
         decoder.eval()
         vgg.eval()
-        decoder.load_state_dict(torch.load('/home/users/stellasu/Transformer-SSL/style_transfer/models/decoder.pth'))
-        vgg.load_state_dict(torch.load('/home/users/stellasu/Transformer-SSL/style_transfer/models/vgg_normalised.pth'))
+        decoder.load_state_dict(torch.load('/home/users/rikiya/contrastive_strap/SSL-Transformer-Histopathology/Transformer-SSL/style_transfer/models/decoder.pth'))
+        vgg.load_state_dict(torch.load('/home/users/rikiya/contrastive_strap/SSL-Transformer-Histopathology/Transformer-SSL/style_transfer/models/vgg_normalised.pth'))
         self.vgg = nn.Sequential(*list(vgg.children())[:31])
         self.decoder = decoder
 
