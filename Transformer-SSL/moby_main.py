@@ -62,6 +62,8 @@ def parse_option():
     parser.add_argument('--eval', action='store_true', help='Perform evaluation only')
     parser.add_argument('--throughput', action='store_true', help='Test throughput only')
 
+    parser.add_argument('--strap_aug_style_path', type=str, default='/scratch/users/rikiya/paintings', help='Path to style images')
+
     # distributed training
     parser.add_argument("--local_rank", type=int, required=True, help='local rank for DistributedDataParallel')
 

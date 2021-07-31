@@ -160,7 +160,7 @@ _C.AUG.MIXUP_MODE = 'batch'
 #Transformation type: None, 'strap', 'stain_aug', 'stain_norm' 
 _C.AUG.TRANSFORMATION = None 
 #STRAP style directory
-_C.AUG.STRAP_STYLE_DIR = '/scratch/users/rikiya/paintings'
+_C.AUG.STRAP_STYLE_DIR = ''
 # Self-Supervised Learning Augmentation
 _C.AUG.SSL_AUG = False
 # SSL-Aug type
