@@ -63,6 +63,8 @@ def parse_option():
     parser.add_argument('--throughput', action='store_true', help='Test throughput only')
 
     parser.add_argument('--strap_aug_style_path', type=str, default='/scratch/users/rikiya/paintings', help='Path to style images')
+    parser.add_argument('--strap_decoder_path', type=str, default='/home/users/rikiya/contrastive_strap/SSL-Transformer-Histopathology/Transformer-SSL/style_transfer/models/decoder.pth', help='Path to strap decoder')
+    parser.add_argument('--strap_vgg_path', type=str, default='/home/users/rikiya/contrastive_strap/SSL-Transformer-Histopathology/Transformer-SSL/style_transfer/models/vgg_normalised.pth', help='Path to strap vgg')
 
     # distributed training
     parser.add_argument("--local_rank", type=int, required=True, help='local rank for DistributedDataParallel')
