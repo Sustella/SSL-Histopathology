@@ -161,6 +161,10 @@ _C.AUG.MIXUP_MODE = 'batch'
 _C.AUG.TRANSFORMATION = None 
 #STRAP style directory
 _C.AUG.STRAP_STYLE_DIR = ''
+#STRAP decoder path
+_C.AUG.STRAP_DECODER_PATH = ''
+#STRAP vgg path
+_C.AUG.STRAP_VGG_PATH = ''
 # Self-Supervised Learning Augmentation
 _C.AUG.SSL_AUG = False
 # SSL-Aug type
@@ -230,6 +234,10 @@ def update_config(config, args):
         config.DATA.DATA_PATH = args.data_path
     if args.strap_aug_style_path:
         config.AUG.STRAP_STYLE_DIR = args.strap_aug_style_path
+    if args.strap_decoder_path:
+        config.AUG.STRAP_STYLE_DIR = args.strap_decoder_path
+    if args.strap_vgg_path:
+        config.AUG.STRAP_STYLE_DIR = args.strap_vgg_path
     if args.zip:
         config.DATA.ZIP_MODE = True
     if args.cache_mode:

@@ -111,7 +111,7 @@ def build_transform(is_train, config):
             normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             if config.AUG.TRANSFORMATION == 'strap':
                 #print("Transformation STRAP")
-                T = stylize.StyleTransfer(style_dir=config.AUG.STRAP_STYLE_DIR)
+                T = stylize.StyleTransfer(style_dir=config.AUG.STRAP_STYLE_DIR, decoder_path=config.AUG.STRAP_DECODER_PATH, vgg_path=config.AUG.STRAP_VGG_PATH)
             elif config.AUG.TRANSFORMATION == 'stain_aug':
                 T = stain_augment()
             elif config.AUG.TRANSFORMATION == 'stain_norm':
