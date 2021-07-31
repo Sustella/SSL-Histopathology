@@ -19,7 +19,7 @@ from .vision_transformer import VisionTransformer
 
 
 vit_models = dict(
-   deit_small=vit_small_patch16_224,
+   deit_small=deit_small_patch16_224,
 )
 
 cnn_models = dict(

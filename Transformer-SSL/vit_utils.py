@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
+Mostly copy-paste from https://github.com/facebookresearch/dino/blob/main/utils.py
+"""
+"""
 Misc functions.
 Mostly copy-paste from torchvision references or other public repos like DETR:
 https://github.com/facebookresearch/detr/blob/master/util/misc.py
