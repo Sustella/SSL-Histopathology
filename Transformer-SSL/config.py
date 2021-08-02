@@ -241,7 +241,7 @@ def update_config(config, args):
     if args.strap_vgg_path:
         config.AUG.STRAP_STYLE_DIR = args.strap_vgg_path
     if args.stain_norm_ref_path:
-        config.AUG.STAIN_NORM_REF_PATH = args.stain_norm_ref_path'
+        config.AUG.STAIN_NORM_REF_PATH = args.stain_norm_ref_path
     if args.zip:
         config.DATA.ZIP_MODE = True
     if args.cache_mode:
