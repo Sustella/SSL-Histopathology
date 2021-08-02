@@ -1,7 +1,7 @@
 #!/bin/bash 
-#SBATCH --job-name=test_4gpu_owners_vlt_stainnorm
-#SBATCH --output=test_4gpu_owners_vlt_stainnorm.out
-#SBATCH --error=test_4gpu_owners_vlt_stainnorm.err
+#SBATCH --job-name=test_4gpu_owners_vlt_stain_norm
+#SBATCH --output=test_4gpu_owners_vlt_stain_norm.out
+#SBATCH --error=test_4gpu_owners_vlt_stain_norm.err
 #SBATCH --time=2-00:00:00
 #SBATCH -p owners
 #SBATCH --gpus 2
