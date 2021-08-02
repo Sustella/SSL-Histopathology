@@ -240,7 +240,7 @@ class stain_augment(object):
         return rgbaug
     
 class stain_norm(object):
-    def get_stain_normalizer(self, path='/home/users/stellasu/Transformer-SSL/stain_norm_ref.png', method='macenko'):
+    def get_stain_normalizer(self, path='/home/users/rikiya/SSL-Transformer-Histopathology/Transformer-SSL/stain_norm_ref.png', method='macenko'):
         target = staintools.read_image(path)
         target = staintools.LuminosityStandardizer.standardize(target)
         normalizer = staintools.StainNormalizer(method=method)
