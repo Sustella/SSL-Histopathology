@@ -165,6 +165,8 @@ _C.AUG.STRAP_STYLE_DIR = ''
 _C.AUG.STRAP_DECODER_PATH = ''
 #STRAP vgg path
 _C.AUG.STRAP_VGG_PATH = ''
+#StainNorm ref image path
+_C.AUG.STAIN_NORM_REF_PATH = ''
 # Self-Supervised Learning Augmentation
 _C.AUG.SSL_AUG = False
 # SSL-Aug type
@@ -238,6 +240,8 @@ def update_config(config, args):
         config.AUG.STRAP_STYLE_DIR = args.strap_decoder_path
     if args.strap_vgg_path:
         config.AUG.STRAP_STYLE_DIR = args.strap_vgg_path
+    if args.stain_norm_ref_path:
+        config.AUG.STAIN_NORM_REF_PATH = args.stain_norm_ref_path'
     if args.zip:
         config.DATA.ZIP_MODE = True
     if args.cache_mode:
