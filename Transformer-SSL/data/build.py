@@ -115,7 +115,7 @@ def build_transform(is_train, config):
             elif config.AUG.TRANSFORMATION == 'stain_aug':
                 T = stain_augment()
             elif config.AUG.TRANSFORMATION == 'stain_norm':
-                T = stain_norm()
+                T = stain_norm(config)
 
             if config.AUG.TRANSFORMATION is not None: 
                 transform_1 = transforms.Compose([
@@ -240,8 +240,11 @@ class stain_augment(object):
         return rgbaug
     
 class stain_norm(object):
-    def get_stain_normalizer(self, path=config.AUG.STAIN_NORM_REF_PATH, method='macenko'):
-        target = staintools.read_image(path)
+    def __init__(self, config):
+        self.config = config
+        
+    def get_stain_normalizer(self, method='macenko'):
+        target = staintools.read_image(self.config.AUG.STAIN_NORM_REF_PATH)
         target = staintools.LuminosityStandardizer.standardize(target)
         normalizer = staintools.StainNormalizer(method=method)
         normalizer.fit(target)

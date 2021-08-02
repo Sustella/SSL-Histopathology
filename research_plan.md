@@ -59,6 +59,7 @@
     - tile-level classification
         - WILDS (https://worksheets.codalab.org/worksheets/0xb44731cc8e8a4265a20146c3887b6b90)
         - NCT-CRC-HE-100K/CRC-VAL-HE-7K (see above)
+
     - wsi-level classification
         - CAMELYON16/17 (see above)
         - PANDA (see above)
@@ -68,9 +69,16 @@
     - DINO ViT: https://github.com/facebookresearch/dino
     - MoBy SWIN/DeiT & DINO DeiT: https://github.com/SwinTransformer/Transformer-SSL
     - SimCLR: https://github.com/binli123/dsmil-wsi
+
 1. Aggregation
+    - TransMIL: https://arxiv.org/abs/2106.00908
     - Attention MIL: https://github.com/AMLab-Amsterdam/AttentionDeepMIL
     - Dual-Stream MIL: https://github.com/binli123/dsmil-wsi
     - CLAM: https://github.com/mahmoodlab/CLAM
     - Transformer: need implementation (refer to Tara's)
 
+
+Ref for distributed learning in Pytorch on HPC
+    - https://jdhao.github.io/2019/11/01/pytorch_distributed_training/
+    - https://tuni-itc.github.io/wiki/Technical-Notes/Distributed_dataparallel_pytorch/
+    - https://yangkky.github.io/2019/07/08/distributed-pytorch-tutorial.html

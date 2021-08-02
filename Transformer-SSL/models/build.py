@@ -18,7 +18,7 @@ from torch import nn
 from .vision_transformer import VisionTransformer
 
 
-vit_models = dict(
+deit_models = dict(
    deit_small=deit_small_patch16_224,
 )
 
@@ -52,7 +52,7 @@ def build_model(config):
         )
     
     elif encoder_type.startswith('deit'):
-       enc = vit_models[encoder_type]
+       enc = deit_models[encoder_type]
     
     elif encoder_type.startswith('vit'):
          enc = partial(
