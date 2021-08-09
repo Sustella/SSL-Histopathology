@@ -162,7 +162,7 @@ def main(config):
 
     if config.MODEL.RESUME:
         max_accuracy = load_checkpoint(config, model_without_ddp, optimizer, lr_scheduler, logger)
-        acc1, acc5, loss = validate(config, data_loader_val, model)
+        acc1, loss = validate(config, data_loader_val, model)
         logger.info(f"Accuracy of the network on the {len(dataset_val)} test images: {acc1:.1f}%")
         if config.EVAL_MODE:
             return
@@ -180,7 +180,7 @@ def main(config):
         if dist.get_rank() == 0 and (epoch % config.SAVE_FREQ == 0 or epoch == (config.TRAIN.EPOCHS - 1)):
             save_checkpoint(config, epoch, model_without_ddp, max_accuracy, optimizer, lr_scheduler, logger)
 
-        acc1, acc5, loss = validate(config, data_loader_val, model)
+        acc1, loss = validate(config, data_loader_val, model)
         logger.info(f"Accuracy of the network on the {len(dataset_val)} test images: {acc1:.1f}%")
         max_accuracy = max(max_accuracy, acc1)
         logger.info(f'Max accuracy: {max_accuracy:.2f}%')
@@ -279,7 +279,6 @@ def validate(config, data_loader, model):
     batch_time = AverageMeter()
     loss_meter = AverageMeter()
     acc1_meter = AverageMeter()
-    acc5_meter = AverageMeter()
 
     end = time.time()
     for idx, (images, target) in enumerate(data_loader):
@@ -291,15 +290,13 @@ def validate(config, data_loader, model):
 
         # measure accuracy and record loss
         loss = criterion(output, target)
-        acc1, acc5 = accuracy(output, target, topk=(1, 5))
+        acc1 = accuracy(output, target)
 
-        acc1 = reduce_tensor(acc1)
-        acc5 = reduce_tensor(acc5)
+        acc1 = reduce_tensor(acc1[0])
         loss = reduce_tensor(loss)
 
         loss_meter.update(loss.item(), target.size(0))
         acc1_meter.update(acc1.item(), target.size(0))
-        acc5_meter.update(acc5.item(), target.size(0))
 
         # measure elapsed time
         batch_time.update(time.time() - end)
@@ -312,10 +309,9 @@ def validate(config, data_loader, model):
                 f'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                 f'Loss {loss_meter.val:.4f} ({loss_meter.avg:.4f})\t'
                 f'Acc@1 {acc1_meter.val:.3f} ({acc1_meter.avg:.3f})\t'
-                f'Acc@5 {acc5_meter.val:.3f} ({acc5_meter.avg:.3f})\t'
                 f'Mem {memory_used:.0f}MB')
-    logger.info(f' * Acc@1 {acc1_meter.avg:.3f} Acc@5 {acc5_meter.avg:.3f}')
-    return acc1_meter.avg, acc5_meter.avg, loss_meter.avg
+    logger.info(f' * Acc@1 {acc1_meter.avg:.3f}')
+    return acc1_meter.avg, loss_meter.avg
 
 
 @torch.no_grad()

@@ -35,4 +35,4 @@ fi
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate transformer-ssl
 
-python3 -m torch.distributed.launch --nproc_per_node 1 --master_port 89457 /home/users/stellasu/Transformer-SSL/moby_linear.py --cfg /home/users/stellasu/Transformer-SSL/configs/moby_swin_tiny_224.yaml --data-path /scratch/users/stellasu/datasets/wilds/camelyon17_v1.0/train_val_data --batch-size 256 --opts TRAIN.EPOCHS 100 DATA.DATASET 'wsi' DATA.IMG_SIZE 224 --local_rank 0 --output /scratch/users/stellasu/ssl_swin_224 --num_classes 2
+python3 -m torch.distributed.launch --nproc_per_node 1 --master_port 89457 $HOME/SSL-Transformer-Histopathology/Transformer-SSL/moby_linear.py --cfg $HOME/SSL-Transformer-Histopathology/Transformer-SSL/configs/moby_swin_tiny_224.yaml --data-path /scratch/users/stellasu/datasets/wilds/camelyon17_v1.0/train_val_data --batch-size 256 --opts TRAIN.EPOCHS 20 DATA.DATASET 'wsi' DATA.IMG_SIZE 224 --local_rank 0 --output /scratch/users/stellasu/ssl_swin_224 --num_classes 2
