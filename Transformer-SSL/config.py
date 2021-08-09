@@ -50,7 +50,7 @@ _C.MODEL.NAME = 'swin_tiny_patch4_window7_224'
 # Checkpoint to resume, could be overwritten by command line argument
 _C.MODEL.RESUME = ''
 # Number of classes, overwritten in data preparation
-_C.MODEL.NUM_CLASSES = 1000
+_C.MODEL.NUM_CLASSES = 1
 # Dropout rate
 _C.MODEL.DROP_RATE = 0.0
 # Drop path rate
@@ -162,11 +162,11 @@ _C.AUG.TRANSFORMATION = None
 #STRAP style directory
 _C.AUG.STRAP_STYLE_DIR = ''
 #STRAP decoder path
-_C.AUG.STRAP_DECODER_PTH = ''
+_C.AUG.STRAP_DECODER_PATH = ''
 #STRAP vgg path
-_C.AUG.STRAP_VGG_PTH = ''
-#Stain Normalization Reference Path
-_C.AUG.STAIN_NORM_PTH = ''
+_C.AUG.STRAP_VGG_PATH = ''
+#StainNorm ref image path
+_C.AUG.STAIN_NORM_REF_PATH = ''
 # Self-Supervised Learning Augmentation
 _C.AUG.SSL_AUG = False
 # SSL-Aug type
@@ -228,12 +228,6 @@ def update_config(config, args):
     config.defrost()
     if args.opts:
         config.merge_from_list(args.opts)
-    #print('args.data_path {}'.format(args.data_path))
-    #print('args.strap_aug_style_path {}'.format(args.strap_aug_style_path))
-    #print('args.strap_aug_decoder_path {}'.format(args.strap_aug_decoder_path))
-    #print('args.strap-aug-decoder-path {}'.format(args.strap-aug-decoder-path))
-    #print('config.AUG.STRAP_DECODER_PTH')
-    #print(config.AUG.STRAP_DECODER_PTH)
 
     # merge from specific arguments
     if args.batch_size:
@@ -242,12 +236,12 @@ def update_config(config, args):
         config.DATA.DATA_PATH = args.data_path
     if args.strap_aug_style_path:
         config.AUG.STRAP_STYLE_DIR = args.strap_aug_style_path
-    if args.strap_aug_decoder_path:
-        config.AUG.STRAP_DECODER_PTH = args.strap_aug_decoder_path
-    if args.strap_aug_vgg_path:
-        config.AUG.STRAP_VGG_PTH = args.strap_aug_vgg_path
-    if args.stain_norm_path:
-        config.AUG.STAIN_NORM_PTH = args.stain_norm_path
+    if args.strap_decoder_path:
+        config.AUG.STRAP_DECODER_PATH = args.strap_decoder_path
+    if args.strap_vgg_path:
+        config.AUG.STRAP_VGG_PATH = args.strap_vgg_path
+    if args.stain_norm_ref_path:
+        config.AUG.STAIN_NORM_REF_PATH = args.stain_norm_ref_path
     if args.zip:
         config.DATA.ZIP_MODE = True
     if args.cache_mode:
@@ -268,6 +262,8 @@ def update_config(config, args):
         config.EVAL_MODE = True
     if args.throughput:
         config.THROUGHPUT_MODE = True
+    if args.num_classes:
+        config.MODEL.NUM_CLASSES = args.num_classes 
 
     # set local rank for distributed training
     config.LOCAL_RANK = args.local_rank

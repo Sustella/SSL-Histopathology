@@ -26,11 +26,11 @@ import staintools
 
 def build_loader(config):
     config.defrost()
-    dataset_train, config.MODEL.NUM_CLASSES = build_dataset(is_train=True, config=config)
+    dataset_train = build_dataset(is_train=True, config=config)
     config.freeze()
     print(f"local rank {config.LOCAL_RANK} / global rank {dist.get_rank()} successfully build train dataset")
     if config.AUG.SSL_LINEAR_AUG:
-        dataset_val, _ = build_dataset(is_train=False, config=config)
+        dataset_val = build_dataset(is_train=False, config=config)
         print(f"local rank {config.LOCAL_RANK} / global rank {dist.get_rank()} successfully build val dataset")
 
     num_tasks = dist.get_world_size()
@@ -79,8 +79,9 @@ def build_loader(config):
 
 def build_dataset(is_train, config):
     transform = build_transform(is_train, config)
+    prefix = 'train' if is_train else 'val'
+    root = os.path.join(config.DATA.DATA_PATH, prefix)
     if config.DATA.DATASET == 'imagenet':
-        prefix = 'train' if is_train else 'val'
         if config.DATA.ZIP_MODE:
             ann_file = prefix + "_map.txt"
             prefix = prefix + ".zip@/"
@@ -88,18 +89,15 @@ def build_dataset(is_train, config):
                                         cache_mode=config.DATA.CACHE_MODE if is_train else 'part')
         else:
             # ToDo: test custom_image_folder
-            root = os.path.join(config.DATA.DATA_PATH, prefix)
             dataset = CustomImageFolder(root, transform=transform)
-        nb_classes = 1000
     elif config.DATA.DATASET == 'wsi':
-        prefix = 'train' if is_train else 'val'
-        root = os.path.join(config.DATA.DATA_PATH, prefix)
-        dataset = CustomImageFolder(root, transform=transform)
-        nb_classes = 1
+        if config.MODEL.TYPE == 'linear': # Linear evaluation
+            dataset = datasets.ImageFolder(root, transform=transform)
+        else: # SSL
+            dataset = CustomImageFolder(root, transform=transform)
     else:
         raise NotImplementedError("We only support ImageNet Now.")
-
-    return dataset, nb_classes
+    return dataset
     
 def build_transform(is_train, config):
     if config.AUG.SSL_AUG:

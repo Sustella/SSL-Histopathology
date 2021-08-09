@@ -12,11 +12,15 @@ import torchvision.transforms
 from torchvision.utils import save_image
 
 class StyleTransfer(object):
-    def __init__(self, style_dir, decoder_pth = '', vgg_pth = '', alpha=1., content_size=512, style_size=256):
+    def __init__(self, style_dir, decoder_path, vgg_path, alpha=1., content_size=1024, style_size=256):
         self.alpha = alpha
         # collect style files
         style_dir = Path(style_dir)
         style_dir = style_dir.resolve()
+        decoder_path = Path(decoder_path)
+        decoder_path = decoder_path.resolve()
+        vgg_path = Path(vgg_path)
+        vgg_path = vgg_path.resolve()
         extensions = ['png', 'jpeg', 'jpg']
         styles = []
         for ext in extensions:
@@ -31,8 +35,9 @@ class StyleTransfer(object):
         decoder.eval()
         vgg.eval()
 
-        decoder.load_state_dict(torch.load(decoder_pth))
-        vgg.load_state_dict(torch.load(vgg_pth))
+        decoder.load_state_dict(torch.load(str(decoder_path)))
+        vgg.load_state_dict(torch.load(str(vgg_path)))
+
         self.vgg = nn.Sequential(*list(vgg.children())[:31])
         self.decoder = decoder
 

@@ -47,6 +47,11 @@ def parse_option():
     # easy config modification
     parser.add_argument('--batch-size', type=int, help="batch size for single GPU")
     parser.add_argument('--data-path', type=str, help='path to dataset')
+    parser.add_argument('--num_classes', type=int, default=1, help="number of classes")
+    parser.add_argument('--strap_aug_style_path', type=str, default='/scratch/users/rikiya/paintings', help='path to strap style images')
+    parser.add_argument('--strap_decoder_path', type=str, default='/home/users/rikiya/contrastive_strap/SSL-Transformer-Histopathology/Transformer-SSL/style_transfer/models/decoder.pth', help='path to strap decoder')
+    parser.add_argument('--strap_vgg_path', type=str, default='/home/users/rikiya/contrastive_strap/SSL-Transformer-Histopathology/Transformer-SSL/style_transfer/models/vgg_normalised.pth', help='path to strap vgg')
+    parser.add_argument('--stain_norm_ref_path', type=str, default='/home/users/rikiya/contrastive_strap/SSL-Transformer-Histopathology/Transformer-SSL/stain_norm_ref.png', help='path to stain norm reference images')
     parser.add_argument('--zip', action='store_true', help='use zipped dataset instead of folder dataset')
     parser.add_argument('--cache-mode', type=str, default='part', choices=['no', 'full', 'part'],
                         help='no: no cache, '
