@@ -8,11 +8,7 @@
 
 #deit_small_patch16_224 isn't supported by timm
 from functools import partial
-<<<<<<< HEAD
 from timm.models import vit_small_patch16_224
-=======
-from timm.models import deit_small_patch16_224
->>>>>>> 2d45259a7d0ab5f6ca8c6b1fb0310097fd0b476e
 from timm.models import vision_transformer
 from timm.models import resnet18, resnet50
 
@@ -23,14 +19,9 @@ from torch import nn
 from .vision_transformer import VisionTransformer
 
 
-<<<<<<< HEAD
 vit_models = dict(
     vit_small=vit_small_patch16_224,
     deit_small=vit_small_patch16_224,
-=======
-deit_models = dict(
-   deit_small=deit_small_patch16_224,
->>>>>>> 2d45259a7d0ab5f6ca8c6b1fb0310097fd0b476e
 )
 
 cnn_models = dict(
@@ -63,11 +54,7 @@ def build_model(config):
         )
     
     elif encoder_type.startswith('deit'):
-<<<<<<< HEAD
        enc = vit_models[encoder_type]
-=======
-       enc = deit_models[encoder_type]
->>>>>>> 2d45259a7d0ab5f6ca8c6b1fb0310097fd0b476e
     
     elif encoder_type.startswith('vit'):
          enc = partial(
