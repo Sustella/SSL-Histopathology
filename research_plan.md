@@ -55,6 +55,37 @@
 
     - NCT-CRC-HE-100k-NONNORM: 100k tiles, 20x, 224x224 (excluded BACK tiles (n = 10,566))
 
+    - 100 sample tiles  
+        ![image](sample100_tiles.png)
+
+1. Pretrain Dataset
+    - Full: 1,112,722 tiles
+    - 10%: 111,272 tiles
+    - 1%: 11,127 tiles
+
+1. Models to train
+    - MoBy Swin-T
+    - MoBy ViT-T (/MoBy DeiT-S)
+    - MoBy ResNet50
+    - (*) n_params: all within 20-30M
+
+    - STRAP
+    - Stain Augmentation
+    - Stain Normalization
+    - Baseline (Default Data Augmentation)
+    - (GrayScale)
+
+    - GPUs: 4 (V100, 32Gb)
+    - BatchSize: 512 (128 * 4)
+
+    - Done:
+        - 1% dataset
+            - MoBy Swin-T: StainAug, Baseline
+            - MoBy ViT-T: Baseline
+            - MoBy ResNet50:
+        - 10% dataset
+            - MoBy Swin-T: Baseline 
+
 1. Downstream tasks (first tile-level -> next wsi-level)
     - tile-level classification
         - WILDS (https://worksheets.codalab.org/worksheets/0xb44731cc8e8a4265a20146c3887b6b90)
