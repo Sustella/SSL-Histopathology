@@ -130,3 +130,10 @@ dmypy.json
 
 # VS Code
 .vscode/
+
+# SBATCH files
+.sh
+.err
+.out
+sbatch/
+script/
