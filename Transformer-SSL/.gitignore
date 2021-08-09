@@ -132,9 +132,6 @@ dmypy.json
 .vscode/
 
 # SBATCH files
-.sh
-.err
-.out
 sbatch/
 script/
 
