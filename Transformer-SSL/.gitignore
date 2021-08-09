@@ -137,3 +137,7 @@ dmypy.json
 .out
 sbatch/
 script/
+
+# Style Transfer Models
+decoder.pth
+vgg_normalised.pth
