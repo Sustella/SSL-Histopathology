@@ -44,10 +44,7 @@ def parse_option():
     # easy config modification
     parser.add_argument('--batch-size', type=int, help="batch size for single GPU")
     parser.add_argument('--data-path', type=str, help='path to dataset')
-<<<<<<< HEAD
     parser.add_argument('--num_classes', type=int, default=1, help="number of classes")
-=======
->>>>>>> 2d45259a7d0ab5f6ca8c6b1fb0310097fd0b476e
     parser.add_argument('--zip', action='store_true', help='use zipped dataset instead of folder dataset')
     parser.add_argument('--cache-mode', type=str, default='part', choices=['no', 'full', 'part'],
                         help='no: no cache, '
