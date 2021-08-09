@@ -74,13 +74,18 @@ def build_loader(config):
             label_smoothing=config.MODEL.LABEL_SMOOTHING, num_classes=config.MODEL.NUM_CLASSES)
     if config.AUG.SSL_LINEAR_AUG:
         return dataset_train, dataset_val, data_loader_train, data_loader_val, mixup_fn
-    return dataset_train, data_loader_train, mixup_fn
+    else:
+        return dataset_train, data_loader_train, mixup_fn
 
 
 def build_dataset(is_train, config):
     transform = build_transform(is_train, config)
+<<<<<<< HEAD
     prefix = 'train' if is_train else 'val'
     root = os.path.join(config.DATA.DATA_PATH, prefix)
+=======
+
+>>>>>>> 2d45259a7d0ab5f6ca8c6b1fb0310097fd0b476e
     if config.DATA.DATASET == 'imagenet':
         if config.DATA.ZIP_MODE:
             ann_file = prefix + "_map.txt"
@@ -90,6 +95,7 @@ def build_dataset(is_train, config):
         else:
             # ToDo: test custom_image_folder
             dataset = CustomImageFolder(root, transform=transform)
+<<<<<<< HEAD
     elif config.DATA.DATASET == 'wsi':
         if config.MODEL.TYPE == 'linear': # Linear evaluation
             dataset = datasets.ImageFolder(root, transform=transform)
@@ -98,6 +104,20 @@ def build_dataset(is_train, config):
     else:
         raise NotImplementedError("We only support ImageNet Now.")
     return dataset
+=======
+        nb_classes = 1000
+
+    elif config.DATA.DATASET == 'wsi':
+        prefix = 'train' if is_train else 'val'
+        root = os.path.join(config.DATA.DATA_PATH, prefix)
+        dataset = CustomImageFolder(root, transform=transform)
+        nb_classes = 1
+
+    else:
+        raise NotImplementedError("We only support ImageNet or WSI Now.")
+
+    return dataset, nb_classes
+>>>>>>> 2d45259a7d0ab5f6ca8c6b1fb0310097fd0b476e
     
 def build_transform(is_train, config):
     if config.AUG.SSL_AUG:
@@ -105,11 +125,20 @@ def build_transform(is_train, config):
             normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
             if config.AUG.TRANSFORMATION == 'strap':
+<<<<<<< HEAD
                 T = stylize.StyleTransfer(style_dir=config.AUG.STRAP_STYLE_DIR, decoder_pth=config.AUG.STRAP_DECODER_PTH, vgg_pth=config.AUG.STRAP_VGG_PTH, content_size=config.DATA.IMG_SIZE)
             elif config.AUG.TRANSFORMATION == 'stain_aug':
                 T = stain_augment()
             elif config.AUG.TRANSFORMATION == 'stain_norm':
                 T = stain_norm(config.AUG.STAIN_NORM_PTH)
+=======
+                #print("Transformation STRAP")
+                T = stylize.StyleTransfer(style_dir=config.AUG.STRAP_STYLE_DIR, decoder_path=config.AUG.STRAP_DECODER_PATH, vgg_path=config.AUG.STRAP_VGG_PATH)
+            elif config.AUG.TRANSFORMATION == 'stain_aug':
+                T = stain_augment()
+            elif config.AUG.TRANSFORMATION == 'stain_norm':
+                T = stain_norm(config)
+>>>>>>> 2d45259a7d0ab5f6ca8c6b1fb0310097fd0b476e
 
             if config.AUG.TRANSFORMATION is not None: 
                 transform_1 = transforms.Compose([
@@ -125,7 +154,7 @@ def build_transform(is_train, config):
                 ])
                 transform_2 = transforms.Compose([
                     T,
-	            transforms.ToPILImage(),
+	                transforms.ToPILImage(),
                     transforms.RandomResizedCrop(config.DATA.IMG_SIZE, scale=(config.AUG.SSL_AUG_CROP, 1.)),
                     transforms.RandomHorizontalFlip(),
                     transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.2, 0.1)], p=0.8),
@@ -234,11 +263,19 @@ class stain_augment(object):
         return rgbaug
     
 class stain_norm(object):
+<<<<<<< HEAD
     def __init__(self, norm_path):
         self.norm_path = norm_path
     def get_stain_normalizer(self, method='macenko'):
         path = self.norm_path
         target = staintools.read_image(path)
+=======
+    def __init__(self, config):
+        self.config = config
+        
+    def get_stain_normalizer(self, method='macenko'):
+        target = staintools.read_image(self.config.AUG.STAIN_NORM_REF_PATH)
+>>>>>>> 2d45259a7d0ab5f6ca8c6b1fb0310097fd0b476e
         target = staintools.LuminosityStandardizer.standardize(target)
         normalizer = staintools.StainNormalizer(method=method)
         normalizer.fit(target)

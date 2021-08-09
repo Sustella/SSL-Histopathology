@@ -1,0 +1,141 @@
+Mon Aug  2 23:41:12 2021       
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 470.57.02    Driver Version: 470.57.02    CUDA Version: 11.4     |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|                               |                      |               MIG M. |
+|===============================+======================+======================|
+|   0  Tesla V100S-PCI...  On   | 00000000:44:00.0 Off |                    0 |
+| N/A   34C    P0    26W / 250W |      0MiB / 32510MiB |      0%      Default |
+|                               |                      |                  N/A |
++-------------------------------+----------------------+----------------------+
+|   1  Tesla V100S-PCI...  On   | 00000000:C4:00.0 Off |                    0 |
+| N/A   37C    P0    26W / 250W |      0MiB / 32510MiB |      0%      Default |
+|                               |                      |                  N/A |
++-------------------------------+----------------------+----------------------+
+                                                                               
++-----------------------------------------------------------------------------+
+| Processes:                                                                  |
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+|        ID   ID                                                   Usage      |
+|=============================================================================|
+|  No running processes found                                                 |
++-----------------------------------------------------------------------------+
+=> merge config from configs/moby_swin_tiny.yaml
+=> merge config from configs/moby_swin_tiny.yaml
+RANK and WORLD_SIZE in environ: 1/2
+RANK and WORLD_SIZE in environ: 0/2
+[32m[2021-08-02 23:41:56 moby__swin_tiny__patch4_window7_224__odpr02_tdpr0_cm099_ct02_queue4096_proj2_pred2][0m[33m(moby_main.py 237)[0m: INFO Full config saved to /scratch/users/rikiya/ssl_pretrain_test_owners_4vlt_strap/moby__swin_tiny__patch4_window7_224__odpr02_tdpr0_cm099_ct02_queue4096_proj2_pred2/default/config.json
+[32m[2021-08-02 23:41:56 moby__swin_tiny__patch4_window7_224__odpr02_tdpr0_cm099_ct02_queue4096_proj2_pred2][0m[33m(moby_main.py 240)[0m: INFO AMP_OPT_LEVEL: O2
+AUG:
+  AUTO_AUGMENT: rand-m9-mstd0.5-inc1
+  COLOR_JITTER: 0.4
+  CUTMIX: 1.0
+  CUTMIX_MINMAX: null
+  MIXUP: 0.8
+  MIXUP_MODE: batch
+  MIXUP_PROB: 1.0
+  MIXUP_SWITCH_PROB: 0.5
+  RECOUNT: 1
+  REMODE: pixel
+  REPROB: 0.25
+  SSL_AUG: true
+  SSL_AUG_CROP: 0.08
+  SSL_AUG_TYPE: byol
+  SSL_LINEAR_AUG: false
+  STAIN_NORM_REF_PATH: /home/users/rikiya/contrastive_strap/SSL-Transformer-Histopathology/Transformer-SSL/stain_norm_ref.png
+  STRAP_DECODER_PATH: ''
+  STRAP_STYLE_DIR: /home/users/rikiya/contrastive_strap/SSL-Transformer-Histopathology/Transformer-SSL/style_transfer/models/vgg_normalised.pth
+  STRAP_VGG_PATH: ''
+  TRANSFORMATION: strap
+BASE:
+- ''
+DATA:
+  BATCH_SIZE: 128
+  CACHE_MODE: part
+  DATASET: wsi
+  DATA_PATH: /scratch/groups/rubin/rikiya/sample
+  IMG_SIZE: 224
+  INTERPOLATION: bicubic
+  NUM_WORKERS: 8
+  PIN_MEMORY: true
+  ZIP_MODE: false
+EVAL_MODE: false
+LINEAR_EVAL:
+  PRETRAINED: ''
+LOCAL_RANK: 0
+MODEL:
+  DROP_PATH_RATE: 0.1
+  DROP_RATE: 0.0
+  LABEL_SMOOTHING: 0.1
+  MOBY:
+    CONTRAST_MOMENTUM: 0.99
+    CONTRAST_NUM_NEGATIVE: 4096
+    CONTRAST_TEMPERATURE: 0.2
+    ENCODER: swin
+    ONLINE_DROP_PATH_RATE: 0.2
+    PRED_NUM_LAYERS: 2
+    PROJ_NUM_LAYERS: 2
+    TARGET_DROP_PATH_RATE: 0.0
+  NAME: moby__swin_tiny__patch4_window7_224__odpr02_tdpr0_cm099_ct02_queue4096_proj2_pred2
+  NUM_CLASSES: 1000
+  RESUME: ''
+  SWIN:
+    APE: false
+    DEPTHS:
+    - 2
+    - 2
+    - 6
+    - 2
+    EMBED_DIM: 96
+    IN_CHANS: 3
+    MLP_RATIO: 4.0
+    NORM_BEFORE_MLP: ln
+    NUM_HEADS:
+    - 3
+    - 6
+    - 12
+    - 24
+    PATCH_NORM: true
+    PATCH_SIZE: 4
+    QKV_BIAS: true
+    QK_SCALE: null
+    WINDOW_SIZE: 7
+  TYPE: moby
+OUTPUT: /scratch/users/rikiya/ssl_pretrain_test_owners_4vlt_strap/moby__swin_tiny__patch4_window7_224__odpr02_tdpr0_cm099_ct02_queue4096_proj2_pred2/default
+PRINT_FREQ: 10
+SAVE_FREQ: 1
+SEED: 0
+TAG: default
+TEST:
+  CROP: true
+THROUGHPUT_MODE: false
+TRAIN:
+  ACCUMULATION_STEPS: 0
+  AUTO_RESUME: true
+  BASE_LR: 0.0005
+  CLIP_GRAD: 5.0
+  EPOCHS: 5
+  LR_SCHEDULER:
+    DECAY_EPOCHS: 30
+    DECAY_RATE: 0.1
+    NAME: cosine
+  MIN_LR: 2.5e-06
+  OPTIMIZER:
+    BETAS:
+    - 0.9
+    - 0.999
+    EPS: 1.0e-08
+    MOMENTUM: 0.9
+    NAME: adamw
+  START_EPOCH: 0
+  USE_CHECKPOINT: false
+  WARMUP_EPOCHS: 5
+  WARMUP_LR: 2.5e-07
+  WEIGHT_DECAY: 0.05
+
+=> merge config from configs/moby_swin_tiny.yaml
+=> merge config from configs/moby_swin_tiny.yaml
+RANK and WORLD_SIZE in environ: 1/2
+RANK and WORLD_SIZE in environ: 0/2
