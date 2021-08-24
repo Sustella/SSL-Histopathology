@@ -25,6 +25,8 @@ _C.DATA.BATCH_SIZE = 64
 _C.DATA.DATA_PATH = ''
 # Dataset name
 _C.DATA.DATASET = 'imagenet'
+# Eval dataset name
+_C.DATA.EVALDATASET = 'val'
 # Input image size
 _C.DATA.IMG_SIZE = 224
 # Interpolation to resize image (random, bilinear, bicubic)
@@ -260,6 +262,8 @@ def update_config(config, args):
         config.TAG = args.tag
     if args.eval:
         config.EVAL_MODE = True
+    if args.eval_set:
+        config.DATA.EVALDATASET = args.eval_set
     if args.throughput:
         config.THROUGHPUT_MODE = True
     if args.num_classes:

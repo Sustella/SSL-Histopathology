@@ -80,7 +80,7 @@ def build_loader(config):
 
 def build_dataset(is_train, config):
     transform = build_transform(is_train, config)
-    prefix = 'train' if is_train else 'val'
+    prefix = 'train' if is_train else config.DATA.EVALDATASET 
     root = os.path.join(config.DATA.DATA_PATH, prefix)
 
     if config.DATA.DATASET == 'imagenet':

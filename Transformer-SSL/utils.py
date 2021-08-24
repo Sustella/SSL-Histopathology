@@ -60,8 +60,7 @@ def load_checkpoint(config, model, optimizer, lr_scheduler, logger):
     torch.cuda.empty_cache()
     return max_accuracy
 
-
-def save_checkpoint(config, epoch, model, max_accuracy, optimizer, lr_scheduler, logger):
+def create_save_state(config, epoch, model, max_accuracy, optimizer, lr_scheduler):
     save_state = {'model': model.state_dict(),
                   'optimizer': optimizer.state_dict(),
                   'lr_scheduler': lr_scheduler.state_dict(),
@@ -70,12 +69,26 @@ def save_checkpoint(config, epoch, model, max_accuracy, optimizer, lr_scheduler,
                   'config': config}
     if config.AMP_OPT_LEVEL != "O0":
         save_state['amp'] = amp.state_dict()
+    return save_state
 
+
+def save_checkpoint(config, epoch, model, max_accuracy, optimizer, lr_scheduler, logger):
+    save_state = create_save_state(config, epoch, model, max_accuracy, optimizer, lr_scheduler) 
     save_path = os.path.join(config.OUTPUT, f'ckpt_epoch_{epoch}.pth')
     logger.info(f"{save_path} saving......")
     torch.save(save_state, save_path)
-    torch.save(save_state, os.path.join(config.OUTPUT, f'checkpoint.pth'))
-    logger.info(f"{save_path} saved !!!")
+    save_path_final_ckpt = os.path.join(config.OUTPUT, f'checkpoint.pth')
+    torch.save(save_state, save_path_final_ckpt)
+    logger.info(f"{save_path_final_ckpt} saved !!!")
+
+
+def save_curr_checkpoint(config, epoch, model, max_accuracy, optimizer, lr_scheduler, logger):
+    save_state = create_save_state(config, epoch, model, max_accuracy, optimizer, lr_scheduler)
+    save_path = os.path.join(config.OUTPUT, f'ckpt_epoch_{epoch}.pth')
+    logger.info(f"{save_path} saving......")
+    torch.save(save_state, save_path)
+    #torch.save(save_state, os.path.join(config.OUTPUT, f'checkpoint.pth'))
+    #logger.info(f"{save_path} saved !!!")
 
 
 def get_grad_norm(parameters, norm_type=2):

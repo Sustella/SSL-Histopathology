@@ -11,10 +11,12 @@ import time
 import argparse
 import datetime
 import numpy as np
+from sklearn.metrics import roc_curve, auc, roc_auc_score
 
 import torch
 import torch.backends.cudnn as cudnn
 import torch.distributed as dist
+import torch.nn.functional as F
 
 from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
 from timm.utils import accuracy, AverageMeter
@@ -25,7 +27,7 @@ from data import build_loader
 from lr_scheduler import build_scheduler
 from optimizer import build_optimizer
 from logger import create_logger
-from utils import load_pretrained, load_checkpoint, save_checkpoint, get_grad_norm, auto_resume_helper, reduce_tensor
+from utils import load_pretrained, load_checkpoint, create_save_state, save_curr_checkpoint, get_grad_norm, auto_resume_helper, reduce_tensor
 
 try:
     # noinspection PyUnresolvedReferences
@@ -67,8 +69,9 @@ def parse_option():
                         help='root of output folder, the full path is <output>/<model_name>/<tag> (default: output)')
     parser.add_argument('--tag', help='tag of experiment')
     parser.add_argument('--eval', action='store_true', help='Perform evaluation only')
+    parser.add_argument('--eval_set', type=str, default='val', help='Eval dataset name')
     parser.add_argument('--throughput', action='store_true', help='Test throughput only')
-
+    
     # distributed training
     parser.add_argument("--local_rank", type=int, required=True, help='local rank for DistributedDataParallel')
     
@@ -83,7 +86,8 @@ def parse_option():
     config.defrost()
     # base
     config.LINEAR_EVAL.PRETRAINED = os.path.join(config.OUTPUT, 'checkpoint.pth')
-    config.OUTPUT = os.path.join(config.OUTPUT, 'linear')
+    #config.OUTPUT = os.path.join(config.OUTPUT, 'linear_' + str(args.lr))
+    config.OUTPUT = os.path.join(config.OUTPUT, 'linear2')
     # model
     config.MODEL.TYPE = 'linear'
     config.MODEL.DROP_PATH_RATE = args.drop_path_rate
@@ -94,8 +98,8 @@ def parse_option():
     config.AUG.CUTMIX = 0.0
     config.AUG.CUTMIX_MINMAX = None
     # train
-    config.TRAIN.EPOCHS = 100
-    config.TRAIN.WARMUP_EPOCHS = 5
+    #config.TRAIN.EPOCHS = 100
+    #config.TRAIN.WARMUP_EPOCHS = 5
     # sched
     config.TRAIN.LR_SCHEDULER.NAME = 'cosine'
     # optim
@@ -116,14 +120,21 @@ def main(config):
     model.cuda()
     logger.info(str(model))
     
+    if 'resnet' in config.MODEL.MOBY.ENCODER:
+       linear_layer_name = 'fc'
+    else:
+       linear_layer_name = 'head'
+
     # fix parameters except head
     for name, p in model.named_parameters():
-        if 'head' not in name:
+        #logger.info(f"name: {name}")
+        if linear_layer_name not in name:
             p.requires_grad = False
 
     optimizer = build_optimizer(config, model)
     if config.AMP_OPT_LEVEL != "O0":
         model, optimizer = amp.initialize(model, optimizer, opt_level=config.AMP_OPT_LEVEL)
+    #model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[config.LOCAL_RANK], broadcast_buffers=False, find_unused_parameters=True)
     model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[config.LOCAL_RANK], broadcast_buffers=False)
     model_without_ddp = model.module
     
@@ -162,10 +173,13 @@ def main(config):
 
     if config.MODEL.RESUME:
         max_accuracy = load_checkpoint(config, model_without_ddp, optimizer, lr_scheduler, logger)
-        acc1, loss = validate(config, data_loader_val, model)
-        logger.info(f"Accuracy of the network on the {len(dataset_val)} test images: {acc1:.1f}%")
         if config.EVAL_MODE:
+            acc1, loss, roc_auc, ci_low, ci_high = evaluate(config, data_loader_val, model)
+            logger.info(f"Accuracy of the network on the {len(dataset_val)} test images: {acc1:.1f}%")
             return
+        else:
+            acc1, loss = validate(config, data_loader_val, model)
+            logger.info(f"Accuracy of the network on the {len(dataset_val)} test images: {acc1:.1f}%")
 
     if config.THROUGHPUT_MODE:
         throughput(data_loader_val, model, logger)
@@ -173,16 +187,24 @@ def main(config):
 
     logger.info("Start linear evaluation training")
     start_time = time.time()
+    save_path_final_ckpt = os.path.join(config.OUTPUT, f'checkpoint.pth')
     for epoch in range(config.TRAIN.START_EPOCH, config.TRAIN.EPOCHS):
         data_loader_train.sampler.set_epoch(epoch)
 
         train_one_epoch(config, model, criterion, data_loader_train, optimizer, epoch, mixup_fn, lr_scheduler)
         if dist.get_rank() == 0 and (epoch % config.SAVE_FREQ == 0 or epoch == (config.TRAIN.EPOCHS - 1)):
-            save_checkpoint(config, epoch, model_without_ddp, max_accuracy, optimizer, lr_scheduler, logger)
+            save_curr_checkpoint(config, epoch, model_without_ddp, max_accuracy, optimizer, lr_scheduler, logger)
 
         acc1, loss = validate(config, data_loader_val, model)
         logger.info(f"Accuracy of the network on the {len(dataset_val)} test images: {acc1:.1f}%")
-        max_accuracy = max(max_accuracy, acc1)
+        #max_accuracy = max(max_accuracy, acc1)
+        if dist.get_rank() == 0 and acc1 > max_accuracy:
+            max_accuracy = acc1
+            save_state = create_save_state(config, epoch, model, max_accuracy, optimizer, lr_scheduler)
+            save_path_final_ckpt = os.path.join(config.OUTPUT, f'checkpoint.pth')
+            torch.save(save_state, save_path_final_ckpt)
+            logger.info(f"EPOCH {epoch}: {save_path_final_ckpt} saved !!!")
+
         logger.info(f'Max accuracy: {max_accuracy:.2f}%')
 
     total_time = time.time() - start_time
@@ -313,6 +335,98 @@ def validate(config, data_loader, model):
     logger.info(f' * Acc@1 {acc1_meter.avg:.3f}')
     return acc1_meter.avg, loss_meter.avg
 
+
+def bootstrap_auc(y_true, y_pred, n_bootstraps=1000, rng_seed=42):
+    n_bootstraps = n_bootstraps
+    rng_seed = rng_seed  # control reproducibility
+    bootstrapped_scores = []
+
+    rng = np.random.RandomState(rng_seed)
+    for i in range(n_bootstraps):
+        # bootstrap by sampling with replacement on the prediction indices
+        indices = rng.randint(len(y_pred), size=len(y_pred))
+        if len(np.unique(y_true[indices])) < 2:
+            # We need at least one positive and one negative sample for ROC AUC
+            # to be defined: reject the sample
+            continue
+        score = roc_auc_score(y_true[indices], y_pred[indices])
+        bootstrapped_scores.append(score)
+#         print("Bootstrap #{} ROC area: {:0.3f}".format(i + 1, score))
+    bootstrapped_scores = np.array(bootstrapped_scores)
+
+    # print("Confidence interval for the score: [{:0.3f} - {:0.3}]".format(
+    #     np.percentile(bootstrapped_scores, (2.5, 97.5))[0], np.percentile(bootstrapped_scores, (2.5, 97.5))[1]))
+    
+    return np.percentile(bootstrapped_scores, (2.5, 97.5))[0], np.percentile(bootstrapped_scores, (2.5, 97.5))[1]
+
+
+@torch.no_grad()
+def evaluate(config, data_loader, model):
+    criterion = torch.nn.CrossEntropyLoss()
+    model.eval()
+    running_loss = 0.0
+    running_corrects = 0
+    dataset_size = len(data_loader.dataset) 
+    whole_probs = torch.FloatTensor(dataset_size)
+    whole_labels = torch.LongTensor(dataset_size)
+
+    batch_time = AverageMeter()
+    loss_meter = AverageMeter()
+    acc1_meter = AverageMeter()
+
+    end = time.time()
+    for idx, (images, target) in enumerate(data_loader):
+        images = images.cuda(non_blocking=True)
+        target = target.cuda(non_blocking=True)
+
+        # compute output
+        output = model(images)
+
+        # measure accuracy and record loss
+        loss = criterion(output, target)
+        acc1 = accuracy(output, target)
+
+        acc1 = reduce_tensor(acc1[0])
+        loss = reduce_tensor(loss)
+
+        loss_meter.update(loss.item(), target.size(0))
+        acc1_meter.update(acc1.item(), target.size(0))
+
+        _, pred = torch.max(output, 1)
+        
+        running_corrects += torch.sum(pred == target.data)
+        batch_size = config.DATA.BATCH_SIZE
+        output = F.softmax(output, dim=1)
+        whole_probs[idx*batch_size:idx*batch_size+images.size(0)]=output.detach()[:,1].clone()
+        whole_labels[idx*batch_size:idx*batch_size+images.size(0)]=target.detach().clone()
+
+        # measure elapsed time
+        batch_time.update(time.time() - end)
+        end = time.time()
+
+        if idx % config.PRINT_FREQ == 0:
+            memory_used = torch.cuda.max_memory_allocated() / (1024.0 * 1024.0)
+            logger.info(
+                f'Test: [{idx}/{len(data_loader)}]\t'
+                f'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                f'Loss {loss_meter.val:.4f} ({loss_meter.avg:.4f})\t'
+                f'Acc@1 {acc1_meter.val:.3f} ({acc1_meter.avg:.3f})\t'
+                f'Mem {memory_used:.0f}MB')
+            
+    total_acc = running_corrects.double() / dataset_size
+
+    # print('Test Loss: {:.4f} Acc: {:.4f}'.format(total_loss, total_acc))
+
+    prob_test = whole_probs.cpu().numpy()
+    label_test = whole_labels.cpu().numpy()
+    #logger.info(f' dataset_size= {dataset_size} prob_test size= {prob_test.size}')
+
+    false_positive_rate, true_positive_rate, thresholds = roc_curve(label_test, prob_test)
+    roc_auc = auc(false_positive_rate, true_positive_rate)
+    ci_low, ci_high = bootstrap_auc(np.array(label_test), np.array(prob_test))
+    logger.info(f'AUROC = {roc_auc} with 95CI of {ci_low}-{ci_high}')
+    logger.info(f' * Acc@1 {acc1_meter.avg:.3f}  total_acc {total_acc*100:.3f}')
+    return acc1_meter.avg, loss_meter.avg, roc_auc, ci_low, ci_high
 
 @torch.no_grad()
 def throughput(data_loader, model, logger):

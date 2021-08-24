@@ -8,7 +8,7 @@
 
 #deit_small_patch16_224 isn't supported by timm
 from functools import partial
-from timm.models import vit_small_patch16_224
+from timm.models import vit_tiny_patch16_224 
 from timm.models import vision_transformer
 from timm.models import resnet18, resnet50
 
@@ -20,8 +20,8 @@ from .vision_transformer import VisionTransformer
 
 
 vit_models = dict(
-    vit_small=vit_small_patch16_224,
-    deit_small=vit_small_patch16_224,
+    vit_tiny=vit_tiny_patch16_224,
+    deit_tiny=vit_tiny_patch16_224,
 )
 
 cnn_models = dict(
@@ -53,14 +53,14 @@ def build_model(config):
             norm_befor_mlp=config.MODEL.SWIN.NORM_BEFORE_MLP,
         )
     
-    elif encoder_type.startswith('deit'):
+    elif encoder_type.startswith('vit'):
        enc = vit_models[encoder_type]
     
-    elif encoder_type.startswith('vit'):
-         enc = partial(
-            VisionTransformer,
-            img_size=[config.DATA.IMG_SIZE], patch_size=16, embed_dim=192, depth=12, num_heads=3, mlp_ratio=4, qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        )
+    #elif encoder_type.startswith('vit'):
+    #     enc = partial(
+    #        VisionTransformer,
+    #        img_size=[config.DATA.IMG_SIZE], patch_size=16, embed_dim=192, depth=12, num_heads=3, mlp_ratio=4, qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6),
+    #    )
 
     elif encoder_type.startswith('resnet'):
         enc = cnn_models[encoder_type]

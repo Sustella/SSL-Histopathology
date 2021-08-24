@@ -66,6 +66,7 @@ def parse_option():
     parser.add_argument('--strap_decoder_path', type=str, default='/home/users/rikiya/contrastive_strap/SSL-Transformer-Histopathology/Transformer-SSL/style_transfer/models/decoder.pth', help='path to strap decoder')
     parser.add_argument('--strap_vgg_path', type=str, default='/home/users/rikiya/contrastive_strap/SSL-Transformer-Histopathology/Transformer-SSL/style_transfer/models/vgg_normalised.pth', help='path to strap vgg')
     parser.add_argument('--stain_norm_ref_path', type=str, default='/home/users/rikiya/contrastive_strap/SSL-Transformer-Histopathology/Transformer-SSL/stain_norm_ref.png', help='path to stain norm reference images')
+    parser.add_argument('--eval_set', type=str, default='val', help='Eval dataset name')
 
     # distributed training
     parser.add_argument("--local_rank", type=int, required=True, help='local rank for DistributedDataParallel')
