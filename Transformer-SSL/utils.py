@@ -24,7 +24,7 @@ def load_pretrained(model, ckpt_path, logger):
     state_dict = {k.replace('encoder.', ''): v for k, v in state_dict.items() if 'encoder.' in k}
     
     for k in model_dict.keys():
-        if 'head' in k:
+        if 'head' in k or 'fc' in k:
             state_dict[k] = model_dict[k]
     
     missing_keys, unexpected_keys = model.load_state_dict(state_dict, strict=False)
