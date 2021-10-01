@@ -203,6 +203,7 @@ _C.PRINT_FREQ = 10
 _C.SEED = 0
 # Perform evaluation only, overwritten by command line argument
 _C.EVAL_MODE = False
+_C.EVAL_CHECKPOINT_NUM = -1
 # Test throughput only, overwritten by command line argument
 _C.THROUGHPUT_MODE = False
 # local rank for DistributedDataParallel, given by command line argument
@@ -264,6 +265,8 @@ def update_config(config, args):
         config.EVAL_MODE = True
     if args.eval_set:
         config.DATA.EVALDATASET = args.eval_set
+    if args.eval_from_checkpoint_num:
+        config.EVAL_CHECKPOINT_NUM = args.eval_from_checkpoint_num
     if args.throughput:
         config.THROUGHPUT_MODE = True
     if args.num_classes:

@@ -87,8 +87,6 @@ def save_curr_checkpoint(config, epoch, model, max_accuracy, optimizer, lr_sched
     save_path = os.path.join(config.OUTPUT, f'ckpt_epoch_{epoch}.pth')
     logger.info(f"{save_path} saving......")
     torch.save(save_state, save_path)
-    #torch.save(save_state, os.path.join(config.OUTPUT, f'checkpoint.pth'))
-    #logger.info(f"{save_path} saved !!!")
 
 
 def get_grad_norm(parameters, norm_type=2):
@@ -110,6 +108,25 @@ def auto_resume_helper(output_dir):
     
     checkpoints = os.listdir(output_dir)
     checkpoints = [ckpt for ckpt in checkpoints if ckpt.endswith('pth')]
+    print(f"All checkpoints founded in {output_dir}: {checkpoints}")
+    if len(checkpoints) > 0:
+        latest_checkpoint = max([os.path.join(output_dir, d) for d in checkpoints], key=os.path.getmtime)
+        print(f"The latest checkpoint founded: {latest_checkpoint}")
+        resume_file = latest_checkpoint
+    else:
+        resume_file = None
+    return resume_file
+
+
+def auto_resume_helper_linear(config):
+    output_dir = config.OUTPUT
+    if config.EVAL_MODE:
+        if config.EVAL_CHECKPOINT_NUM == -1 and os.path.exists(os.path.join(output_dir, 'checkpoint.pth')):
+            return os.path.join(output_dir, 'checkpoint.pth')
+        else:
+            return os.path.join(output_dir, 'ckpt_epoch_{}.pth'.format(config.EVAL_CHECKPOINT_NUM))
+    checkpoints = os.listdir(output_dir)
+    checkpoints = [ckpt for ckpt in checkpoints if ckpt.endswith('pth') and ckpt.startswith('ckpt_epoch')]
     print(f"All checkpoints founded in {output_dir}: {checkpoints}")
     if len(checkpoints) > 0:
         latest_checkpoint = max([os.path.join(output_dir, d) for d in checkpoints], key=os.path.getmtime)

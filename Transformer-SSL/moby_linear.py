@@ -11,6 +11,7 @@ import time
 import argparse
 import datetime
 import numpy as np
+import shutil
 from sklearn.metrics import roc_curve, auc, roc_auc_score
 
 import torch
@@ -27,7 +28,7 @@ from data import build_loader
 from lr_scheduler import build_scheduler
 from optimizer import build_optimizer
 from logger import create_logger
-from utils import load_pretrained, load_checkpoint, create_save_state, save_curr_checkpoint, get_grad_norm, auto_resume_helper, reduce_tensor
+from utils import load_pretrained, load_checkpoint, create_save_state, save_curr_checkpoint, get_grad_norm, auto_resume_helper_linear, reduce_tensor
 
 try:
     # noinspection PyUnresolvedReferences
@@ -71,7 +72,9 @@ def parse_option():
     parser.add_argument('--eval', action='store_true', help='Perform evaluation only')
     parser.add_argument('--eval_set', type=str, default='val', help='Eval dataset name')
     parser.add_argument('--throughput', action='store_true', help='Test throughput only')
-    
+    parser.add_argument('--eval_from_checkpoint_num', type=int, default=-1, help='Checkpoint to perform evaluation')   
+
+ 
     # distributed training
     parser.add_argument("--local_rank", type=int, required=True, help='local rank for DistributedDataParallel')
     
@@ -86,8 +89,8 @@ def parse_option():
     config.defrost()
     # base
     config.LINEAR_EVAL.PRETRAINED = os.path.join(config.OUTPUT, 'checkpoint.pth')
-    #config.OUTPUT = os.path.join(config.OUTPUT, 'linear_' + str(args.lr))
-    config.OUTPUT = os.path.join(config.OUTPUT, 'linear')
+    config.OUTPUT = os.path.join(config.OUTPUT, 'linear_' + str(args.lr))
+    #config.OUTPUT = os.path.join(config.OUTPUT, 'linear')
     # model
     config.MODEL.TYPE = 'linear'
     config.MODEL.DROP_PATH_RATE = args.drop_path_rate
@@ -134,7 +137,6 @@ def main(config):
     optimizer = build_optimizer(config, model)
     if config.AMP_OPT_LEVEL != "O0":
         model, optimizer = amp.initialize(model, optimizer, opt_level=config.AMP_OPT_LEVEL)
-    #model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[config.LOCAL_RANK], broadcast_buffers=False, find_unused_parameters=True)
     model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[config.LOCAL_RANK], broadcast_buffers=False)
     model_without_ddp = model.module
     
@@ -160,7 +162,7 @@ def main(config):
     max_accuracy = 0.0
 
     if config.TRAIN.AUTO_RESUME:
-        resume_file = auto_resume_helper(config.OUTPUT)
+        resume_file = auto_resume_helper_linear(config)
         if resume_file:
             if config.MODEL.RESUME:
                 logger.warning(f"auto-resume changing resume file from {config.MODEL.RESUME} to {resume_file}")
@@ -172,6 +174,8 @@ def main(config):
             logger.info(f'no checkpoint found in {config.OUTPUT}, ignoring auto resume')
 
     if config.MODEL.RESUME:
+        # Note that max_accuracy is from eval of the previous best checkpoint on validation set, not eval on the
+        # checkpoint about to load.  
         max_accuracy = load_checkpoint(config, model_without_ddp, optimizer, lr_scheduler, logger)
         if config.EVAL_MODE:
             acc1, loss, roc_auc, ci_low, ci_high = evaluate(config, data_loader_val, model)
@@ -180,6 +184,7 @@ def main(config):
         else:
             acc1, loss = validate(config, data_loader_val, model)
             logger.info(f"Accuracy of the network on the {len(dataset_val)} test images: {acc1:.1f}%")
+            max_accuracy = max(max_accuracy, acc1)
 
     if config.THROUGHPUT_MODE:
         throughput(data_loader_val, model, logger)
@@ -197,14 +202,12 @@ def main(config):
 
         acc1, loss = validate(config, data_loader_val, model)
         logger.info(f"Accuracy of the network on the {len(dataset_val)} test images: {acc1:.1f}%")
-        #max_accuracy = max(max_accuracy, acc1)
-        if dist.get_rank() == 0 and acc1 > max_accuracy:
-            max_accuracy = acc1
-            save_state = create_save_state(config, epoch, model, max_accuracy, optimizer, lr_scheduler)
+        if dist.get_rank() == 0 and acc1 > max_accuracy and (epoch % config.SAVE_FREQ == 0 or epoch == (config.TRAIN.EPOCHS - 1)):
             save_path_final_ckpt = os.path.join(config.OUTPUT, f'checkpoint.pth')
-            torch.save(save_state, save_path_final_ckpt)
+            shutil.copy2(os.path.join(config.OUTPUT, f'ckpt_epoch_{epoch}.pth'), save_path_final_ckpt)
             logger.info(f"EPOCH {epoch}: {save_path_final_ckpt} saved !!!")
 
+        max_accuracy = max(max_accuracy, acc1)
         logger.info(f'Max accuracy: {max_accuracy:.2f}%')
 
     total_time = time.time() - start_time
@@ -351,12 +354,8 @@ def bootstrap_auc(y_true, y_pred, n_bootstraps=1000, rng_seed=42):
             continue
         score = roc_auc_score(y_true[indices], y_pred[indices])
         bootstrapped_scores.append(score)
-#         print("Bootstrap #{} ROC area: {:0.3f}".format(i + 1, score))
     bootstrapped_scores = np.array(bootstrapped_scores)
 
-    # print("Confidence interval for the score: [{:0.3f} - {:0.3}]".format(
-    #     np.percentile(bootstrapped_scores, (2.5, 97.5))[0], np.percentile(bootstrapped_scores, (2.5, 97.5))[1]))
-    
     return np.percentile(bootstrapped_scores, (2.5, 97.5))[0], np.percentile(bootstrapped_scores, (2.5, 97.5))[1]
 
 
@@ -394,7 +393,6 @@ def evaluate(config, data_loader, model):
 
         _, pred = torch.max(output, 1)
         
-        running_corrects += torch.sum(pred == target.data)
         batch_size = config.DATA.BATCH_SIZE
         output = F.softmax(output, dim=1)
         whole_probs[idx*batch_size:idx*batch_size+images.size(0)]=output.detach()[:,1].clone()
@@ -413,19 +411,14 @@ def evaluate(config, data_loader, model):
                 f'Acc@1 {acc1_meter.val:.3f} ({acc1_meter.avg:.3f})\t'
                 f'Mem {memory_used:.0f}MB')
             
-    total_acc = running_corrects.double() / dataset_size
-
-    # print('Test Loss: {:.4f} Acc: {:.4f}'.format(total_loss, total_acc))
-
     prob_test = whole_probs.cpu().numpy()
     label_test = whole_labels.cpu().numpy()
-    #logger.info(f' dataset_size= {dataset_size} prob_test size= {prob_test.size}')
 
     false_positive_rate, true_positive_rate, thresholds = roc_curve(label_test, prob_test)
     roc_auc = auc(false_positive_rate, true_positive_rate)
     ci_low, ci_high = bootstrap_auc(np.array(label_test), np.array(prob_test))
     logger.info(f'AUROC = {roc_auc} with 95CI of {ci_low}-{ci_high}')
-    logger.info(f' * Acc@1 {acc1_meter.avg:.3f}  total_acc {total_acc*100:.3f}')
+    logger.info(f' * Acc@1 {acc1_meter.avg:.3f} \n\n')
     return acc1_meter.avg, loss_meter.avg, roc_auc, ci_low, ci_high
 
 @torch.no_grad()
