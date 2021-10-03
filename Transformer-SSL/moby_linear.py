@@ -28,7 +28,7 @@ from data import build_loader
 from lr_scheduler import build_scheduler
 from optimizer import build_optimizer
 from logger import create_logger
-from utils import load_pretrained, load_checkpoint, create_save_state, save_curr_checkpoint, get_grad_norm, auto_resume_helper_linear, reduce_tensor
+from utils import load_pretrained, load_checkpoint, save_checkpoint, get_grad_norm, auto_resume_helper, reduce_tensor
 
 try:
     # noinspection PyUnresolvedReferences
@@ -162,7 +162,7 @@ def main(config):
     max_accuracy = 0.0
 
     if config.TRAIN.AUTO_RESUME:
-        resume_file = auto_resume_helper_linear(config)
+        resume_file = auto_resume_helper(config.OUTPUT)
         if resume_file:
             if config.MODEL.RESUME:
                 logger.warning(f"auto-resume changing resume file from {config.MODEL.RESUME} to {resume_file}")
@@ -174,8 +174,6 @@ def main(config):
             logger.info(f'no checkpoint found in {config.OUTPUT}, ignoring auto resume')
 
     if config.MODEL.RESUME:
-        # Note that max_accuracy is from eval of the previous best checkpoint on validation set, not eval on the
-        # checkpoint about to load.  
         max_accuracy = load_checkpoint(config, model_without_ddp, optimizer, lr_scheduler, logger)
         if config.EVAL_MODE:
             acc1, loss, roc_auc, ci_low, ci_high = evaluate(config, data_loader_val, model)
@@ -192,21 +190,15 @@ def main(config):
 
     logger.info("Start linear evaluation training")
     start_time = time.time()
-    save_path_final_ckpt = os.path.join(config.OUTPUT, f'checkpoint.pth')
     for epoch in range(config.TRAIN.START_EPOCH, config.TRAIN.EPOCHS):
         data_loader_train.sampler.set_epoch(epoch)
 
         train_one_epoch(config, model, criterion, data_loader_train, optimizer, epoch, mixup_fn, lr_scheduler)
         if dist.get_rank() == 0 and (epoch % config.SAVE_FREQ == 0 or epoch == (config.TRAIN.EPOCHS - 1)):
-            save_curr_checkpoint(config, epoch, model_without_ddp, max_accuracy, optimizer, lr_scheduler, logger)
+            save_checkpoint(config, epoch, model_without_ddp, max_accuracy, optimizer, lr_scheduler, logger)
 
         acc1, loss = validate(config, data_loader_val, model)
         logger.info(f"Accuracy of the network on the {len(dataset_val)} test images: {acc1:.1f}%")
-        if dist.get_rank() == 0 and acc1 > max_accuracy and (epoch % config.SAVE_FREQ == 0 or epoch == (config.TRAIN.EPOCHS - 1)):
-            save_path_final_ckpt = os.path.join(config.OUTPUT, f'checkpoint.pth')
-            shutil.copy2(os.path.join(config.OUTPUT, f'ckpt_epoch_{epoch}.pth'), save_path_final_ckpt)
-            logger.info(f"EPOCH {epoch}: {save_path_final_ckpt} saved !!!")
-
         max_accuracy = max(max_accuracy, acc1)
         logger.info(f'Max accuracy: {max_accuracy:.2f}%')
 
