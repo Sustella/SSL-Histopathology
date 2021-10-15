@@ -8,6 +8,7 @@
 
 #deit_small_patch16_224 isn't supported by timm
 from functools import partial
+from timm.models import vit_small_patch16_224
 from timm.models import vit_tiny_patch16_224 
 from timm.models import vision_transformer
 from timm.models import resnet18, resnet50
@@ -18,15 +19,14 @@ from .moby import MoBY
 from torch import nn
 from .vision_transformer import VisionTransformer
 
-
 vit_models = dict(
     vit_tiny=vit_tiny_patch16_224,
-    deit_tiny=vit_tiny_patch16_224,
+    vit_small=vit_small_patch16_224,
 )
 
 cnn_models = dict(
     resnet50 = resnet50,
-    # resnet18 = resnet18,
+    resnet18 = resnet18,
 )
 
 def build_model(config):
