@@ -54,7 +54,7 @@ def parse_option():
     parser.add_argument('--strap_aug_style_path', type=str, default='/scratch/users/rikiya/paintings', help='path to strap style images')
     parser.add_argument('--strap_decoder_path', type=str, default='/home/users/rikiya/contrastive_strap/SSL-Transformer-Histopathology/Transformer-SSL/style_transfer/models/decoder.pth', help='path to strap decoder')
     parser.add_argument('--strap_vgg_path', type=str, default='/home/users/rikiya/contrastive_strap/SSL-Transformer-Histopathology/Transformer-SSL/style_transfer/models/vgg_normalised.pth', help='path to strap vgg')
-    parser.add_argument('--stain_norm_ref_path', type=str, default='/home/users/rikiya/contrastive_strap/SSL-Transformer-Histopathology/Transformer-SSL/stain_norm_ref.png', help='path to stain norm reference images')
+    parser.add_argument('--stain_norm_ref_path', type=str, default='/home/users/stellasu/Transformer-SSL-rikiya/stain_norm_ref.png', help='path to stain norm reference images')
     parser.add_argument('--zip', action='store_true', help='use zipped dataset instead of folder dataset')
     parser.add_argument('--cache-mode', type=str, default='part', choices=['no', 'full', 'part'],
                         help='no: no cache, '
@@ -72,7 +72,6 @@ def parse_option():
     parser.add_argument('--eval', action='store_true', help='Perform evaluation only')
     parser.add_argument('--eval_set', type=str, default='val', help='Eval dataset name')
     parser.add_argument('--throughput', action='store_true', help='Test throughput only')
-    parser.add_argument('--eval_from_checkpoint_num', type=int, default=-1, help='Checkpoint to perform evaluation')   
 
  
     # distributed training
@@ -90,7 +89,7 @@ def parse_option():
     # base
     config.LINEAR_EVAL.PRETRAINED = os.path.join(config.OUTPUT, 'checkpoint.pth')
     config.OUTPUT = os.path.join(config.OUTPUT, 'linear_' + str(args.lr))
-    #config.OUTPUT = os.path.join(config.OUTPUT, 'linear')
+
     # model
     config.MODEL.TYPE = 'linear'
     config.MODEL.DROP_PATH_RATE = args.drop_path_rate
@@ -128,11 +127,13 @@ def main(config):
     else:
        linear_layer_name = 'head'
 
-    # fix parameters except head
+    # freeze parameters except head
     for name, p in model.named_parameters():
         #logger.info(f"name: {name}")
         if linear_layer_name not in name:
             p.requires_grad = False
+        else:
+            logger.info(f"name: {name}")
 
     optimizer = build_optimizer(config, model)
     if config.AMP_OPT_LEVEL != "O0":
@@ -457,6 +458,7 @@ if __name__ == '__main__':
 
     # linear scale the learning rate according to total batch size, may not be optimal
     linear_scaled_lr = config.TRAIN.BASE_LR * config.DATA.BATCH_SIZE * dist.get_world_size() / 512.0
+    print('linear_scaled_lr {}'.format(linear_scaled_lr))
     linear_scaled_warmup_lr = config.TRAIN.WARMUP_LR * config.DATA.BATCH_SIZE * dist.get_world_size() / 512.0
     linear_scaled_min_lr = config.TRAIN.MIN_LR * config.DATA.BATCH_SIZE * dist.get_world_size() / 512.0
     # gradient accumulation also need to scale the learning rate
@@ -468,6 +470,7 @@ if __name__ == '__main__':
     config.TRAIN.BASE_LR = linear_scaled_lr
     config.TRAIN.WARMUP_LR = linear_scaled_warmup_lr
     config.TRAIN.MIN_LR = linear_scaled_min_lr
+    config.OUTPUT = os.path.join(config.OUTPUT, 'linear_' + str(linear_scaled_lr))
     config.freeze()
 
     os.makedirs(config.OUTPUT, exist_ok=True)

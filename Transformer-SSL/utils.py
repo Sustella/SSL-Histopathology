@@ -9,12 +9,14 @@
 import os
 import torch
 import torch.distributed as dist
+from collections import OrderedDict
 
 try:
     # noinspection PyUnresolvedReferences
     from apex import amp
 except ImportError:
     amp = None
+
 
 def load_pretrained(model, ckpt_path, logger):
     model_dict = model.state_dict()
@@ -23,7 +25,7 @@ def load_pretrained(model, ckpt_path, logger):
     state_dict = {k.replace('encoder.', ''): v for k, v in state_dict.items() if 'encoder.' in k}
     
     for k in model_dict.keys():
-        if 'head' in k or 'fc' in k:
+        if 'head' in k:
             state_dict[k] = model_dict[k]
     
     missing_keys, unexpected_keys = model.load_state_dict(state_dict, strict=False)
@@ -34,13 +36,39 @@ def load_pretrained(model, ckpt_path, logger):
 
 
 def load_checkpoint(config, model, optimizer, lr_scheduler, logger):
-    logger.info(f"==============> Resuming form {config.MODEL.RESUME}....................")
+    logger.info(f"==============> Resuming from {config.MODEL.RESUME}....................")
     if config.MODEL.RESUME.startswith('https'):
         checkpoint = torch.hub.load_state_dict_from_url(
             config.MODEL.RESUME, map_location='cpu', check_hash=True)
     else:
         checkpoint = torch.load(config.MODEL.RESUME, map_location='cpu')
-    msg = model.load_state_dict(checkpoint['model'], strict=False)
+    if 'model' in checkpoint:
+        encoder_k = False
+        for k in checkpoint['model'].keys():
+            if 'encoder_k' in k:
+                msg = model.load_state_dict(checkpoint['model'], strict=False)
+                encoder_k = True
+                break
+        if not encoder_k:
+            new_state_dict = OrderedDict()
+            for k, v in checkpoint['model'].items():
+                name = 'encoder.' + k
+                new_state_dict[name] = v
+                name = 'encoder_k.' + k
+                new_state_dict[name] = v
+            # load params
+            msg = model.load_state_dict(new_state_dict, strict=False)
+    else: # Resnet
+        # create new OrderedDict that contains `encoder.` and 'encoder_k.'
+        new_state_dict = OrderedDict()
+        for k, v in checkpoint.items():
+            if 'fc' not in k:
+                name = 'encoder.' + k 
+                new_state_dict[name] = v
+                name = 'encoder_k.' + k
+                new_state_dict[name] = v
+        # load params
+        msg = model.load_state_dict(new_state_dict, strict=False)
     logger.info(msg)
     max_accuracy = 0.0
     if not config.EVAL_MODE and 'optimizer' in checkpoint and 'lr_scheduler' in checkpoint and 'epoch' in checkpoint:
@@ -58,6 +86,7 @@ def load_checkpoint(config, model, optimizer, lr_scheduler, logger):
     del checkpoint
     torch.cuda.empty_cache()
     return max_accuracy
+
 
 def save_checkpoint(config, epoch, model, max_accuracy, optimizer, lr_scheduler, logger):
     save_state = {'model': model.state_dict(),
