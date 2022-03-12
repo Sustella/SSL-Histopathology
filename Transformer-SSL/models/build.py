@@ -6,7 +6,6 @@
 # Modified by Zhenda Xie
 # --------------------------------------------------------
 
-#deit_small_patch16_224 isn't supported by timm
 from functools import partial
 from timm.models import vit_small_patch16_224
 from timm.models import vit_tiny_patch16_224 
